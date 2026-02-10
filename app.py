@@ -2,69 +2,75 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-last_location = {"lat": 41.3111, "lon": 69.2797}
-
+last_location = {"lat": 0, "lon": 0}
 
 @app.route("/")
 def home():
     return "Patrol server is running"
 
-
 @app.route("/location", methods=["POST"])
 def receive_location():
-    data = request.get_json(force=True)
+    data = request.get_json(force=True) or {}
 
     last_location["lat"] = float(data.get("lat", 0))
     last_location["lon"] = float(data.get("lon", 0))
 
     return jsonify({"status": "ok"})
 
-
 @app.route("/get_location")
 def get_location():
     return jsonify(last_location)
 
 
+# 🔥 MAP SAHIFA
 @app.route("/map")
 def map_page():
     return """
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<style>
-html, body, #map { height: 100%; margin: 0; }
-</style>
-</head>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Patrol Map</title>
 
-<body>
-<div id="map"></div>
+        <link rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-<script>
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-var map = L.map('map').setView([41.3111, 69.2797], 13);
+        <style>
+            html, body, #map {
+                height: 100%;
+                margin: 0;
+            }
+        </style>
+    </head>
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-}).addTo(map);
+    <body>
+        <div id="map"></div>
 
-var marker = L.marker([41.3111, 69.2797]).addTo(map);
+        <script>
+            const map = L.map('map').setView([41.3, 69.2], 12);
 
-async function updateLocation() {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
 
-    let res = await fetch('/get_location');
-    let data = await res.json();
+            const marker = L.marker([41.3, 69.2]).addTo(map);
 
-    marker.setLatLng([data.lat, data.lon]);
-    map.setView([data.lat, data.lon], 15);
-}
+            async function refresh() {
+                const r = await fetch('/get_location');
+                const d = await r.json();
 
-setInterval(updateLocation, 3000);
+                marker.setLatLng([d.lat, d.lon]);
+                map.setView([d.lat, d.lon], 15);
+            }
 
-</script>
+            setInterval(refresh, 3000);
+        </script>
 
-</body>
-</html>
-"""
+    </body>
+    </html>
+    """
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

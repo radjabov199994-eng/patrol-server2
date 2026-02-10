@@ -1,3 +1,6 @@
+@app.route("/version")
+def version():
+    return "VERSION_2026_02_10_01"
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)

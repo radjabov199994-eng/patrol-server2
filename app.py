@@ -1,72 +1,46 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+import os
 
 app = Flask(__name__)
 
+# Oxirgi joylashuv (default)
 last_location = {"lat": 41.3, "lon": 69.2}
 
+# Root - darrov xarita ochilsin (Not Found bo‘lmaydi)
 @app.route("/")
-def home():
-    return "Patrol server is running"
+def index():
+    return render_template("map.html")
 
+# Xarita sahifasi (xohlasang alohida ham ishlaydi)
+@app.route("/map")
+def map_page():
+    return render_template("map.html")
+
+# Location qabul qilish (POST)
 @app.route("/location", methods=["POST"])
 def receive_location():
     data = request.get_json(force=True) or {}
-    last_location["lat"] = float(data.get("lat", last_location["lat"]))
-    last_location["lon"] = float(data.get("lon", last_location["lon"]))
-    return jsonify({"status": "ok"})
 
+    # lat/lon kelmasa eski qiymat qoladi
+    try:
+        last_location["lat"] = float(data.get("lat", last_location["lat"]))
+        last_location["lon"] = float(data.get("lon", last_location["lon"]))
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "lat/lon number bo‘lishi kerak"}), 400
+
+    return jsonify({"status": "ok", "saved": last_location})
+
+# Location olish (GET)
 @app.route("/get_location")
 def get_location():
     return jsonify(last_location)
 
-@app.route("/map")
-def map_page():
-    return """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patrol Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-  <style>
-    html, body { height: 100%; margin: 0; }
-    #map { height: 100%; }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([41.3, 69.2], 12);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-
-    const marker = L.marker([41.3, 69.2]).addTo(map);
-
-    async function refresh() {
-      try {
-        const r = await fetch('/get_location');
-        const d = await r.json();
-        marker.setLatLng([d.lat, d.lon]);
-        map.setView([d.lat, d.lon], map.getZoom());
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
-    refresh();
-    setInterval(refresh, 3000);
-  </script>
-</body>
-</html>
-"""
+# Version tekshiruv (debug uchun)
+@app.route("/version")
+def version():
+    return "VERSION_2026_02_10_OK"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)}
-
-setInterval(refresh, 3000);
-</script>
+    # Lokal ishga tushirish uchun (Render gunicorn ishlatadi)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

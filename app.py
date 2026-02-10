@@ -1,18 +1,18 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-last_location = {"lat": None, "lon": None}
+last_location = {"lat": 0, "lon": 0}
 
 @app.route("/")
 def home():
-    return "Server ishlayapti ✅"
+    return "Patrol server is running ✅"
 
 @app.route("/location", methods=["POST"])
-def location():
-    data = request.get_json(force=True)
-    last_location["lat"] = data.get("lat")
-    last_location["lon"] = data.get("lon")
+def receive_location():
+    data = request.get_json(force=True) or {}
+    last_location["lat"] = data.get("lat", last_location["lat"])
+    last_location["lon"] = data.get("lon", last_location["lon"])
     return jsonify({"status": "ok"})
 
 @app.route("/get_location")
@@ -20,43 +20,45 @@ def get_location():
     return jsonify(last_location)
 
 @app.route("/map")
-def map_view():
-    return render_template_string("""
-<!DOCTYPE html>
+def map_page():
+    return f"""
+<!doctype html>
 <html>
 <head>
-  <title>Patrul xaritasi</title>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patrol Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
-    body, html { margin:0; padding:0; }
-    #map { height:100vh; }
+    html, body, #map {{ height: 100%; margin: 0; }}
   </style>
 </head>
 <body>
-<div id="map"></div>
+  <div id="map"></div>
+  <script>
+    const map = L.map('map').setView([41.3111, 69.2797], 12);
+    L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+      maxZoom: 19
+    }}).addTo(map);
 
-<script>
-  var lat = {{ lat if lat else 41.3111 }};
-  var lon = {{ lon if lon else 69.2797 }};
+    const marker = L.marker([0,0]).addTo(map).bindPopup("Xodim");
 
-  var map = L.map('map').setView([lat, lon], 13);
+    async function refresh() {{
+      const r = await fetch('/get_location');
+      const d = await r.json();
+      marker.setLatLng([d.lat, d.lon]);
+      if (d.lat !== 0 || d.lon !== 0) {{
+        map.setView([d.lat, d.lon], 15);
+      }}
+    }}
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  L.marker([lat, lon]).addTo(map)
-    .bindPopup("📍 Patrul shu yerda")
-    .openPopup();
-</script>
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
 </body>
 </html>
-""", lat=last_location["lat"], lon=last_location["lon"])
+"""
 
 if __name__ == "__main__":
     app.run()

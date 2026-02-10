@@ -11,8 +11,10 @@ def home():
 @app.route("/location", methods=["POST"])
 def receive_location():
     data = request.get_json(force=True)
+
     last_location["lat"] = data.get("lat", 0)
     last_location["lon"] = data.get("lon", 0)
+
     return jsonify({"status": "ok"})
 
 @app.route("/get_location")

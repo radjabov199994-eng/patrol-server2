@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Patrol Dashboard Premium</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+  :root{
+    --bg:#07111f;
+    --bg2:#0b1730;
+    --card:rgba(13,24,47,.88);
+    --card-2:rgba(12,21,40,.94);
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(96,165,250,.18);
+    --text:#ecf3ff;
+    --muted:#94a3b8;
+    --blue:#3b82f6;
+    --blue2:#60a5fa;
+    --green:#22c55e;
+    --yellow:#f59e0b;
+    --red:#ef4444;
+    --violet:#8b5cf6;
+    --shadow:0 18px 40px rgba(0,0,0,.35);
+    --radius:18px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+
+  body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top right, rgba(59,130,246,.18), transparent 25%),
+      radial-gradient(circle at top left, rgba(34,197,94,.10), transparent 20%),
+      linear-gradient(180deg, #06101d, #0a1324 45%, #091426 100%);
+  }
+
+  a{color:inherit;text-decoration:none}
+  button,input,textarea{font:inherit}
+  textarea{resize:vertical}
+
+  .page{
+    padding:14px;
+  }
+
+  .header{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+    padding:14px 18px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:rgba(8,14,28,.78);
+    backdrop-filter:blur(14px);
+    box-shadow:var(--shadow);
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-width:0;
+  }
+
+  .brand-badge{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    background:
+      radial-gradient(circle at 30% 30%, #8cc4ff, #2563eb 58%, #0b1730 100%);
+    box-shadow:
+      0 0 0 6px rgba(59,130,246,.13),
+      0 10px 20px rgba(37,99,235,.22);
+    flex:0 0 auto;
+  }
+
+  .brand h1{
+    margin:0;
+    font-size:26px;
+    line-height:1.1;
+  }
+
+  .brand p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .nav-link{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.025);
+    color:#dbe7ff;
+    font-weight:700;
+    transition:.2s ease;
+  }
+
+  .nav-link:hover{
+    border-color:rgba(96,165,250,.28);
+    background:rgba(255,255,255,.05);
+  }
+
+  .nav-link.active{
+    border-color:rgba(96,165,250,.35);
+    background:linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.10));
+    box-shadow:inset 0 0 0 1px rgba(147,197,253,.08);
+  }
+
+  .logout-btn{
+    border:1px solid rgba(239,68,68,.22);
+    background:linear-gradient(180deg, rgba(127,29,29,.95), rgba(69,10,10,.95));
+    color:#fee2e2;
+    padding:10px 14px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    transition:.2s ease;
+  }
+
+  .logout-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 18px rgba(127,29,29,.22);
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:14px;
+    align-items:start;
+  }
+
+  .sidebar{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-width:0;
+  }
+
+  .content{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-width:0;
+  }
+
+  .panel{
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:20px;
+    background:rgba(10,18,34,.92);
+    box-shadow:0 14px 32px rgba(0,0,0,.28);
+    overflow:hidden;
+    min-width:0;
+  }
+
+  .panel-head{
+    padding:15px 18px 12px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+  }
+
+  .panel-title{
+    margin:0;
+    font-size:20px;
+    font-weight:800;
+  }
+
+  .panel-sub{
+    margin-top:5px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.4;
+  }
+
+  .panel-body{
+    padding:16px 18px 18px;
+  }
+
+  .inp,
+  .textarea,
+  .select{
+    width:100%;
+    border:1px solid rgba(148,163,184,.18);
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+    color:var(--text);
+    border-radius:14px;
+    padding:12px 14px;
+    outline:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+  }
+
+  .inp::placeholder,
+  .textarea::placeholder{
+    color:#8090ad;
+  }
+
+  .inp:focus,
+  .textarea:focus{
+    border-color:rgba(96,165,250,.45);
+    box-shadow:0 0 0 4px rgba(59,130,246,.12);
+  }
+
+  .textarea{
+    min-height:92px;
+  }
+
+  .btn{
+    border:none;
+    border-radius:14px;
+    padding:12px 16px;
+    font-weight:800;
+    color:#fff;
+    cursor:pointer;
+    background:linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow:0 10px 20px rgba(29,78,216,.22);
+    transition:.2s ease;
+  }
+
+  .btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.04);
+  }
+
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+    filter:none;
+  }
+
+  .btn-green{
+    background:linear-gradient(135deg, rgba(34,197,94,.92), rgba(22,163,74,.92));
+    box-shadow:0 12px 24px rgba(34,197,94,.18);
+  }
+
+  .btn-dark{
+    background:linear-gradient(135deg, rgba(30,41,59,.95), rgba(15,23,42,.95));
+    box-shadow:none;
+    border:1px solid var(--line);
+    color:#dbe8ff;
+  }
+
+  .btn-light{
+    background:linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    box-shadow:none;
+    border:1px solid var(--line);
+    color:#dbe8ff;
+  }
+
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .tiny-label{
+    display:block;
+    margin-bottom:6px;
+    color:#b8c7e6;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  .picked-box{
+    margin-top:12px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(255,255,255,.025);
+    color:#dce8ff;
+    line-height:1.6;
+    font-size:13px;
+  }
+
+  .toggle{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(255,255,255,.03);
+    color:#e5efff;
+    padding:13px 14px;
+    cursor:pointer;
+    margin-top:10px;
+    font-weight:700;
+  }
+
+  .toggle small{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .section{
+    display:none;
+    margin-top:10px;
+    padding:2px 0 0;
+  }
+  .section.open{ display:block; }
+
+  .list-card{
+    border:1px solid rgba(255,255,255,.07);
+    background:rgba(255,255,255,.028);
+    border-radius:16px;
+    padding:12px;
+    margin-bottom:8px;
+    cursor:pointer;
+  }
+
+  .list-card:hover{
+    border-color:rgba(96,165,250,.3);
+    background:rgba(255,255,255,.05);
+  }
+
+  .list-card-title{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    font-weight:800;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.035);
+    font-size:12px;
+    color:#dce8ff;
+  }
+
+  .muted{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .map-shell{
+    position:relative;
+    padding:16px;
+  }
+
+  .map-topbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  .map-title{
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .toolbar .inp{
+    min-width:250px;
+  }
+
+  .dashboardTicker{
+    position:relative;
+    height:40px;
+    margin:0 12px;
+    border-radius:14px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(8,14,28,.86);
+    box-shadow:0 10px 24px rgba(0,0,0,.28);
+    backdrop-filter:blur(10px);
+    pointer-events:none;
+  }
+
+  .dashboardTickerTrack{
+    white-space:nowrap;
+    display:inline-block;
+    padding-left:100%;
+    animation:tickerMove 26s linear infinite;
+    font-size:13px;
+    font-weight:800;
+    color:#eaf2ff;
+  }
+
+  .dashboardTickerTrack span{
+    display:inline-block;
+    margin-right:30px;
+  }
+
+  .tickerGreen{color:var(--green)}
+  .tickerBlue{color:var(--blue2)}
+  .tickerYellow{color:var(--yellow)}
+  .tickerRed{color:var(--red)}
+  .tickerGray{color:#94a3b8}
+
+  @keyframes tickerMove{
+    0%{transform:translateX(0)}
+    100%{transform:translateX(-100%)}
+  }
+
+  #map{
+    width:100%;
+    height:720px;
+    border-radius:20px;
+    border:1px solid rgba(96,165,250,.10);
+    overflow:hidden;
+    background:#05070d;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.02),
+      0 18px 40px rgba(0,0,0,.35);
+  }
+
+  .map-mini-alert{
+    margin-top:12px;
+    border:1px solid rgba(59,130,246,.12);
+    background:rgba(10,18,34,.88);
+    border-radius:14px;
+    padding:11px 14px;
+    font-size:13px;
+    color:#dceaff;
+    font-weight:700;
+  }
+
+  .bottom-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:760px;
+  }
+
+  th,td{
+    text-align:left;
+    padding:12px 12px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:13px;
+    vertical-align:top;
+  }
+
+  th{
+    color:#cbd9f1;
+    font-size:12px;
+    letter-spacing:.2px;
+    background:rgba(255,255,255,.02);
+    position:sticky;
+    top:0;
+    z-index:1;
+  }
+
+  .table-wrap{
+    max-height:320px;
+    overflow:auto;
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:16px;
+  }
+
+  .status{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    padding:7px 10px;
+    font-size:12px;
+    font-weight:800;
+    border:1px solid rgba(255,255,255,.07);
+    background:rgba(255,255,255,.035);
+    color:#e7f0ff;
+  }
+
+  .status.new{ background:rgba(245,158,11,.12); color:#ffd79a; border-color:rgba(245,158,11,.22); }
+  .status.assigned{ background:rgba(59,130,246,.12); color:#b9d6ff; border-color:rgba(59,130,246,.24); }
+  .status.accepted{ background:rgba(239,68,68,.12); color:#ffb9b9; border-color:rgba(239,68,68,.24); }
+  .status.arrived{ background:rgba(34,197,94,.12); color:#baf5cb; border-color:rgba(34,197,94,.22); }
+  .status.done{ background:rgba(139,92,246,.12); color:#dcc7ff; border-color:rgba(139,92,246,.24); }
+  .status.closed{ background:rgba(148,163,184,.12); color:#e2e8f0; border-color:rgba(148,163,184,.24); }
+  .status.canceled{ background:rgba(239,68,68,.12); color:#fecaca; border-color:rgba(239,68,68,.22); }
+
+  .footer-note{
+    margin-top:10px;
+    color:#8fa1bf;
+    font-size:12px;
+  }
+
+  .routeTip{
+    background: rgba(255,255,255,.96);
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:7px 10px;
+    font-size:12px;
+    color:#111827;
+    box-shadow:0 10px 18px rgba(0,0,0,.12);
+  }
+
+  .markerWrap{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .markerWrap img{
+    width:100%;
+    height:100%;
+    display:block;
+    filter:drop-shadow(0 8px 14px rgba(0,0,0,.24));
+  }
+
+  .markerWrap.pulse::after,
+  .markerWrap.blink::after{
+    content:"";
+    position:absolute;
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    border:2px solid var(--c, #22c55e);
+    opacity:.55;
+    animation:ring 1.8s infinite;
+  }
+
+  .markerWrap.fast::after{ animation-duration:1s; }
+  .markerWrap.slow::after{ animation-duration:2.3s; }
+
+  @keyframes ring{
+    0%{transform:scale(.4);opacity:.6}
+    100%{transform:scale(1.8);opacity:0}
+  }
+
+  @media (max-width:1280px){
+    .layout{ grid-template-columns:1fr; }
+    .toolbar .inp{ min-width:180px; width:100%; }
+    .header{ grid-template-columns:1fr; }
+    .dashboardTicker{ max-width:100%; margin:0; }
+  }
+
+  @media (max-width:700px){
+    .page{ padding:10px; }
+    .header{
+      padding:12px;
+      grid-template-columns:1fr;
+    }
+    .panel-head, .panel-body, .map-shell{ padding:14px; }
+    .dashboardTicker{
+      max-width:100%;
+      margin:0;
+      height:38px;
+    }
+    .toolbar .inp{
+      min-width:100%;
+      width:100%;
+    }
+    .grid-2{ grid-template-columns:1fr; }
+    #map{ height:520px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-badge"></div>
+      <div>
+        <h1 style="margin:0;">Patrul boshqaruv markazi</h1>
+        <p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">
+          Real vaqt rejimida hodimlar, murojaatlar va marshrut nazorati
+        </p>
+      </div>
+    </div>
+
+    <div id="dashboardTicker" class="dashboardTicker">
+      <div class="dashboardTickerTrack" id="dashboardTickerTrack"></div>
+    </div>
+
+    <div class="header-actions">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/dashboard/" class="nav-link active">Dashboard</a>
+      <a href="/admin/" class="nav-link">Admin</a>
+
+      <form method="POST" action="/accounts/logout/" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">Chiqish</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3 class="panel-title">Hodimlar boshqaruvi</h3>
+          <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
+        </div>
+
+        <div class="panel-body">
+          <label class="tiny-label">Hodim qidirish</label>
+          <input id="officerSearch" class="inp" placeholder="Masalan: Ali, Karimov, ali123..." />
+          <div id="officerSearchResults" style="margin-top:10px;"></div>
+
+          <div class="picked-box">
+            <div>Tanlangan hodim: <b id="pickedOfficer">—</b></div>
+            <div>Tanlangan vizov: <b id="pickedIncident">—</b></div>
+          </div>
+
+          <button id="assignBtn" class="btn btn-green" style="margin-top:12px;width:100%;" disabled>
+            📌 Tanlangan vizovni hodimga biriktirish
+          </button>
+
+          <div class="footer-note">
+            Eslatma: avval jadvaldan vizovni bosing, keyin hodimni tanlang.
+          </div>
+
+          <button class="toggle" id="toggleOnline">
+            <span>🟢 Online hodimlar</span>
+            <small id="onlineCount">0</small>
+          </button>
+          <div class="section" id="onlineBox"></div>
+
+          <button class="toggle" id="toggleOffline">
+            <span>⚫ Offline hodimlar</span>
+            <small id="offlineCount">0</small>
+          </button>
+          <div class="section" id="offlineBox"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3 class="panel-title">Yangi murojaat yaratish</h3>
+          <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
+        </div>
+
+        <div class="panel-body">
+          <form method="POST" action="/create-incident-form/" id="incidentForm">
+            {% csrf_token %}
+
+            <div class="grid-2">
+              <div>
+                <label class="tiny-label">Latitude</label>
+                <input class="inp" type="text" id="lat" name="lat" placeholder="39.6542" />
+              </div>
+              <div>
+                <label class="tiny-label">Longitude</label>
+                <input class="inp" type="text" id="lng" name="lng" placeholder="66.9597" />
+              </div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <label class="tiny-label">Manzil</label>
+            <input class="inp" type="text" id="address_text" name="address_text" placeholder="Avto to‘ldiriladi yoki qo‘lda yoziladi" />
+
+            <div style="height:10px"></div>
+
+            <label class="tiny-label">Hodisa tafsiloti</label>
+            <textarea class="textarea" id="details" name="details" placeholder="Masalan: yo‘l-transport hodisasi, janjal, tezkor yordam kerak..."></textarea>
+
+            <div style="height:10px"></div>
+
+            <div class="grid-2">
+              <div>
+                <label class="tiny-label">Jabrlanuvchi ismi</label>
+                <input class="inp" type="text" name="victim_first_name" placeholder="Ism" />
+              </div>
+              <div>
+                <label class="tiny-label">Jabrlanuvchi familiyasi</label>
+                <input class="inp" type="text" name="victim_last_name" placeholder="Familiya" />
+              </div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <label class="tiny-label">Telefon raqami</label>
+            <input class="inp" type="text" name="caller_phone" placeholder="+998..." />
+
+            <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+              <button class="btn btn-green" type="submit" style="flex:1 1 180px;">
+                🚀 Vizovni yuborish
+              </button>
+              <button class="btn btn-dark" type="button" onclick="cancelDraftMarker()" style="flex:1 1 160px;">
+                Bekor qilish
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="content">
+
+      <div class="panel">
+        <div class="map-shell">
+          <div class="map-topbar">
+            <div>
+              <h3 class="map-title">Operativ xarita</h3>
+              <div class="panel-sub">Hodimlar joylashuvi, murojaatlar va marshrut kuzatuvi</div>
+            </div>
+
+            <div class="toolbar">
+              <input id="searchBox" class="inp" placeholder="Samarqand bo‘yicha manzil qidiring..." />
+              <button id="searchBtn" class="btn" type="button">Qidirish</button>
+              <button id="refreshBtn" class="btn btn-light" type="button">Yangilash</button>
+            </div>
+          </div>
+
+          <div id="map"></div>
+
+          <div class="map-mini-alert" id="miniAlert">
+            Tizim tayyor. Xarita ustida vizov nuqtasini tanlang yoki jadvaldan mavjud vizovni bosing.
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="panel">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <h3 class="panel-title">Murojaatlar holati</h3>
+              <div class="panel-sub">Biriktirilgan, qabul qilingan, yetib borilgan va yopilgan murojaatlar ro‘yxati</div>
+            </div>
+
+            <a class="btn btn-light" href="/reports/daily.xlsx" target="_blank">📥 Excel yuklab olish</a>
+          </div>
+
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Status</th>
+                    <th>Hodim</th>
+                    <th>Tel</th>
+                    <th>Manzil</th>
+                    <th>Berilgan</th>
+                    <th>Masofa</th>
+                  </tr>
+                </thead>
+                <tbody id="incTable">
+                  <tr><td colspan="7" class="muted">Yuklanmoqda...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <h3 class="panel-title">Bugungi yetib borishlar</h3>
+              <div class="panel-sub">Qisqacha jadval. To‘liq ma’lumot Excel’da.</div>
+            </div>
+
+            <a class="btn btn-light" id="excelBtn" href="/reports/daily.xlsx" target="_blank">📊 Excel ochish</a>
+          </div>
+
+          <div class="panel-body">
+            <div class="table-wrap" style="max-height:220px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Hodim</th>
+                    <th>Kelish vaqti</th>
+                    <th>Qisqa</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody id="arrivalTable">
+                  <tr><td colspan="5" class="muted">Yuklanmoqda...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+function getCookie(name) {
+  const v = `; ${document.cookie}`;
+  const parts = v.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return "";
+}
+
+window.onerror = function(msg, src, line, col){
+  console.log("JS ERROR:", msg, src, line, col);
+};
+
+const STATUS_UZ = {
+  "NEW": "Yangi",
+  "ASSIGNED": "Biriktirildi",
+  "ACCEPTED": "Qabul qilindi",
+  "ARRIVED": "Yetib keldi",
+  "DONE": "Bajarildi",
+  "CLOSED": "Yopildi",
+  "CANCELED": "Bekor qilindi"
+};
+
+function statusUz(s){ return STATUS_UZ[s] || s || "—"; }
+
+function statusClass(s){
+  const m = {
+    NEW: "new",
+    ASSIGNED: "assigned",
+    ACCEPTED: "accepted",
+    ARRIVED: "arrived",
+    DONE: "done",
+    CLOSED: "closed",
+    CANCELED: "canceled"
+  };
+  return m[s] || "";
+}
+
+function statusBadge(s){
+  return `<span class="status ${statusClass(s)}">${statusUz(s)}</span>`;
+}
+
+function fmtDistance(m) {
+  if (m == null) return "—";
+  if (m < 1000) return Math.round(m) + " m";
+  return (m / 1000).toFixed(2) + " km";
+}
+
+function fmtTime(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+}
+
+function fmtDateTime(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+
+  return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
+}
+
+function diffMinutes(a, b){
+  if(!a || !b) return null;
+  const t1 = Date.parse(a);
+  const t2 = Date.parse(b);
+  if(isNaN(t1) || isNaN(t2)) return null;
+  return Math.round((t2 - t1) / 60000);
+}
+
+function isOnlineByLastSeen(o, seconds = 30){
+  if (!o || !o.last_seen) return false;
+  const t = Date.parse(o.last_seen);
+  if (isNaN(t)) return false;
+  return (Date.now() - t) <= seconds * 1000;
+}
+
+function sameLocalDay(iso){
+  if(!iso) return false;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear()
+      && d.getMonth() === now.getMonth()
+      && d.getDate() === now.getDate();
+}
+
+function setMiniAlert(text){
+  const el = document.getElementById("miniAlert");
+  if (el) el.innerHTML = text;
+}
+
+/* ✅ MAP INIT — CARTO FIX */
+var map = L.map('map', {
+  zoomControl: true,
+  preferCanvas: true
+}).setView([39.6542, 66.9597], 13);
+
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {
+    subdomains: 'abcd',
+    maxZoom: 20,
+    attribution: '&copy; OpenStreetMap &copy; CARTO'
+  }
+).addTo(map);
+
+var incidentsLayer = L.layerGroup().addTo(map);
+var officersLayer = L.layerGroup().addTo(map);
+var routesLayer = L.layerGroup().addTo(map);
+var clickMarker = null;
+
+setTimeout(function(){
+  map.invalidateSize();
+}, 500);
+
+window.addEventListener("resize", function(){
+  map.invalidateSize();
+});
+
+setTimeout(function(){
+  map.invalidateSize();
+}, 500);
+
+window.addEventListener("resize", function(){
+  map.invalidateSize();
+});
+
+window.addEventListener("resize", function(){
+  map.invalidateSize();
+});
+
+var officersCache = [];
+var incidentsCache = [];
+var officerMarkers = {};
+var selectedOfficerId = null;
+var selectedIncidentId = null;
+let __officersInFlight = false;
+let __incidentsInFlight = false;
+
+/* ICON CACHE */
+const __ICON_CACHE = new Map();
+
+function cachedDivIcon(key, makeFn){
+  if (__ICON_CACHE.has(key)) return __ICON_CACHE.get(key);
+  const icon = makeFn();
+  __ICON_CACHE.set(key, icon);
+  return icon;
+}
+
+function svgToDivIcon(svg, size, anchorX, anchorY, cls, color){
+  const url = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  return L.divIcon({
+    className: "",
+    html: `<div class="markerWrap ${cls || ""}" style="--c:${color || "#22c55e"}"><img src="${url}" alt="marker"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [anchorX, anchorY],
+    popupAnchor: [0, -Math.round(size/2)]
+  });
+}
+
+function officerIncidentState(officerId){
+  const active = (incidentsCache || []).filter(i =>
+    i.assigned_officer === officerId &&
+    ["ASSIGNED","ACCEPTED","ARRIVED"].includes(i.status)
+  );
+  if (active.some(i => i.status === "ARRIVED")) return "ARRIVED";
+  if (active.some(i => i.status === "ACCEPTED")) return "ACCEPTED";
+  if (active.some(i => i.status === "ASSIGNED")) return "ASSIGNED";
+  return null;
+}
+
+function officerCarIcon(o){
+  let color = "#94a3b8";
+  if (isOnlineByLastSeen(o, 30)) color = "#22c55e";
+
+  const st = officerIncidentState(o.id);
+  if (st === "ASSIGNED") color = "#60a5fa";
+  if (st === "ACCEPTED") color = "#ef4444";
+  if (st === "ARRIVED") color = "#2563eb";
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3"/>
+      </filter>
+    </defs>
+    <circle cx="32" cy="32" r="28" fill="${color}" opacity="0.16" filter="url(#glow)"/>
+    <path d="M12 36c0-8 6-12 14-12h12c8 0 14 4 14 12v8H12z" fill="${color}"/>
+    <rect x="18" y="28" width="28" height="8" rx="4" fill="#0b1220" opacity="0.5"/>
+    <circle cx="22" cy="48" r="6" fill="#111827"/>
+    <circle cx="42" cy="48" r="6" fill="#111827"/>
+    <circle cx="22" cy="48" r="3" fill="#cbd5e1"/>
+    <circle cx="42" cy="48" r="3" fill="#cbd5e1"/>
+  </svg>`;
+
+  let pulseCls = "";
+  if (isOnlineByLastSeen(o,30)) pulseCls = "pulse";
+  if (st === "ACCEPTED") pulseCls = "pulse fast";
+  if (st === "ARRIVED") pulseCls = "pulse slow";
+
+  const key = "car|" + color + "|" + pulseCls;
+  return cachedDivIcon(key, () => svgToDivIcon(svg, 44, 22, 22, pulseCls, color));
+}
+
+function incidentPeopleIcon(status){
+  let badge = "#8b5cf6";
+  if (status === "NEW") badge = "#f59e0b";
+  if (status === "ASSIGNED") badge = "#60a5fa";
+  if (status === "ACCEPTED") badge = "#ef4444";
+  if (status === "ARRIVED") badge = "#22c55e";
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+      <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.35"/>
+      </filter>
+    </defs>
+    <path d="M32 60C18 44 12 36 12 26a20 20 0 0 1 40 0c0 10-6 18-20 34z" fill="${badge}" filter="url(#shadow)"/>
+    <circle cx="32" cy="26" r="14" fill="#fff" opacity="0.14"/>
+    <circle cx="27" cy="24" r="5" fill="#fde68a"/>
+    <circle cx="37" cy="24" r="5" fill="#fbcfe8"/>
+    <path d="M18 38c1-6 6-9 9-9s8 3 9 9" fill="#fde68a"/>
+    <path d="M28 38c1-6 6-9 9-9s8 3 9 9" fill="#fbcfe8"/>
+  </svg>`;
+
+  let blinkCls = "";
+  if (["NEW","ASSIGNED","ACCEPTED"].includes(status)) blinkCls = "blink";
+
+  const key = "inc|" + badge + "|" + blinkCls;
+  return cachedDivIcon(key, () => svgToDivIcon(svg, 44, 22, 44, blinkCls, badge));
+}
+
+/* ROUTES */
+var routeCache = {};
+
+function routeKey(aLat, aLng, bLat, bLng){
+  return [aLat.toFixed(5), aLng.toFixed(5), bLat.toFixed(5), bLng.toFixed(5)].join("|");
+}
+
+function getRoadRoute(aLat, aLng, bLat, bLng){
+  var key = routeKey(aLat, aLng, bLat, bLng);
+  if (routeCache[key]) return Promise.resolve(routeCache[key]);
+
+  var url =
+    "https://router.project-osrm.org/route/v1/driving/" +
+    encodeURIComponent(aLng + "," + aLat + ";" + bLng + "," + bLat) +
+    "?overview=full&geometries=geojson";
+
+  return fetch(url)
+    .then(r => { if(!r.ok) throw new Error("osrm " + r.status); return r.json(); })
+    .then(j => {
+      if (!j.routes || !j.routes.length) throw new Error("osrm no routes");
+      var route = j.routes[0];
+      var coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+      var out = { distance_m: route.distance, coords: coords };
+      routeCache[key] = out;
+      return out;
+    });
+}
+
+function clearRoutes(){
+  routesLayer.clearLayers();
+}
+
+function drawSelectedRoute(inc){
+  clearRoutes();
+
+  var off = officersCache.find(o => o.id === inc.assigned_officer);
+  if (!off || !off.last_lat || !off.last_lng){
+    setMiniAlert("Tanlangan hodimning lokatsiyasi yo‘q.");
+    return;
+  }
+  if (!inc.lat || !inc.lng){
+    setMiniAlert("Tanlangan vizov koordinatasi yo‘q.");
+    return;
+  }
+
+  var aLat = off.last_lat, aLng = off.last_lng;
+  var bLat = inc.lat, bLng = inc.lng;
+
+  getRoadRoute(aLat, aLng, bLat, bLng)
+    .then(r => {
+      var line = L.polyline(r.coords, { weight: 5 }).addTo(routesLayer);
+      map.fitBounds(line.getBounds(), { padding:[30,30] });
+
+      var mid = line.getCenter();
+      L.tooltip({ permanent:true, direction:"center", className:"routeTip" })
+        .setContent("Yo‘l bo‘yicha: <b>" + fmtDistance(r.distance_m) + "</b>")
+        .setLatLng(mid)
+        .addTo(routesLayer);
+
+      setMiniAlert(`Tanlangan route chizildi. Vizov <b>#${inc.id}</b> • Masofa: <b>${fmtDistance(r.distance_m)}</b>`);
+    })
+    .catch(() => {
+      var line2 = L.polyline([[aLat,aLng],[bLat,bLng]], { weight: 3, dashArray: "6 8" }).addTo(routesLayer);
+      map.fitBounds(line2.getBounds(), { padding:[30,30] });
+
+      var distM = map.distance([aLat,aLng],[bLat,bLng]);
+      var mid = line2.getCenter();
+      L.tooltip({ permanent:true, direction:"center", className:"routeTip" })
+        .setContent("Masofa: <b>" + fmtDistance(distM) + "</b>")
+        .setLatLng(mid)
+        .addTo(routesLayer);
+
+      setMiniAlert(`OSRM topilmadi, to‘g‘ri chiziq bo‘yicha masofa ko‘rsatildi: <b>${fmtDistance(distM)}</b>`);
+    });
+}
+
+window.focusIncident = function(incidentId){
+  selectedIncidentId = incidentId;
+  setPickedUI();
+  renderIncidentMarkers(incidentsCache);
+
+  var inc = incidentsCache.find(x => x.id === incidentId);
+  if(!inc) return;
+
+  if (inc.lat && inc.lng){
+    map.setView([parseFloat(inc.lat), parseFloat(inc.lng)], Math.max(map.getZoom(), 15));
+  }
+
+  if (!inc.assigned_officer){
+    setMiniAlert(`Vizov <b>#${inc.id}</b> tanlandi. Hali hodim biriktirilmagan.`);
+    return;
+  }
+
+  drawSelectedRoute(inc);
+};
+
+/* RENDER OFFICERS */
+function renderOfficers(list) {
+  officersLayer.clearLayers();
+  officerMarkers = {};
+  if (!Array.isArray(list)) return;
+
+  list.forEach(o => {
+    if (o.last_lat && o.last_lng) {
+      if (!isOnlineByLastSeen(o, 30)) return;
+
+      var status = isOnlineByLastSeen(o,30) ? "🟢 Online" : "⚫ Offline";
+      var lastSeen = o.last_seen ? o.last_seen : "—";
+      var img = "";
+
+      if (o.photo_url) {
+        img = "<div style='margin:6px 0'>" +
+              "<img src='" + o.photo_url + "' " +
+              "style='width:70px;height:70px;border-radius:12px;object-fit:cover;border:1px solid rgba(0,0,0,.2)'/>" +
+              "</div>";
+      }
+
+      var popup = img +
+        "<b>" + (o.first_name || "") + " " + (o.last_name || "") + "</b><br/>" +
+        "<span class='muted'>" + (o.username || "") + "</span><br/>" +
+        "Lavozim: <b>" + (o.position || "—") + "</b><br/>" +
+        "Tel: <b>" + (o.phone || "—") + "</b><br/>" +
+        status + "<br/>Last seen: " + lastSeen;
+
+      var m = L.marker([o.last_lat, o.last_lng], { icon: officerCarIcon(o) })
+        .addTo(officersLayer)
+        .bindPopup(popup);
+
+      officerMarkers[o.id] = m;
+    }
+  });
+}
+
+function renderOfficerPanels(list){
+  var online = list.filter(o => isOnlineByLastSeen(o, 30));
+  var offline = list.filter(o => !isOnlineByLastSeen(o, 30));
+
+  document.getElementById("onlineCount").innerText = online.length;
+  document.getElementById("offlineCount").innerText = offline.length;
+
+  function row(o){
+    var onlineNow = isOnlineByLastSeen(o, 30);
+
+    return (
+      '<div style="margin:8px 0;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.03)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<b>' + (o.username || "—") + '</b>' +
+          '<span class="pill"><span class="dotmini ' + (onlineNow ? '' : 'off') + '"></span>' + (onlineNow ? 'Online' : 'Offline') + '</span>' +
+        '</div>' +
+        '<div class="muted" style="margin-top:6px">Last seen: ' + (o.last_seen || '—') + '</div>' +
+      '</div>'
+    );
+  }
+
+  document.getElementById("onlineBox").innerHTML =
+    online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+
+  document.getElementById("offlineBox").innerHTML =
+    offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+}
+
+/* INCIDENT TABLE */
+function renderIncidentsTable(list){
+  var tb = document.getElementById("incTable");
+  if (!tb) return;
+
+  if (!list || !list.length){
+    tb.innerHTML = '<tr><td colspan="7" class="muted">Murojaat yo‘q</td></tr>';
+    return;
+  }
+
+  var filtered = list.filter(i =>
+    ["NEW","ASSIGNED","ACCEPTED","ARRIVED","DONE","CLOSED","CANCELED"].includes(i.status)
+  );
+
+  const STATUS_ORDER = {
+    "NEW": 0,
+    "ASSIGNED": 1,
+    "ACCEPTED": 2,
+    "ARRIVED": 3,
+    "DONE": 4,
+    "CLOSED": 5,
+    "CANCELED": 6
+  };
+
+  filtered.sort((a, b) => {
+    const pa = STATUS_ORDER[a.status] ?? 99;
+    const pb = STATUS_ORDER[b.status] ?? 99;
+    if (pa !== pb) return pa - pb;
+    return b.id - a.id;
+  });
+
+  var officerById = {};
+  (officersCache || []).forEach(o => officerById[o.id] = o);
+
+  tb.innerHTML = filtered.map(i => {
+    var createdTime = fmtTime(i.created_at);
+    var distTxt = "—";
+
+    if (i.assigned_officer && officerById[i.assigned_officer] && i.lat && i.lng){
+      var off = officerById[i.assigned_officer];
+      if (off.last_lat && off.last_lng){
+        var meters = map.distance([off.last_lat, off.last_lng], [i.lat, i.lng]);
+        distTxt = fmtDistance(meters);
+      }
+    }
+
+    return (
+      `<tr style="cursor:pointer" onclick="focusIncident(${i.id})">
+        <td><b>#${i.id}</b></td>
+        <td>${statusBadge(i.status)}</td>
+        <td>${i.assigned_officer_name || i.assigned_officer_username || (i.assigned_officer || "—")}</td>
+        <td>${i.caller_phone || "—"}</td>
+        <td>${i.address_text || "—"}</td>
+        <td>${createdTime}</td>
+        <td>${distTxt}</td>
+      </tr>`
+    );
+  }).join("");
+}
+/* INCIDENT MARKERS */
+function renderIncidentMarkers(list){
+  incidentsLayer.clearLayers();
+  if (!Array.isArray(list)) return;
+
+  list.forEach(i => {
+    if (i.lat == null || i.lng == null) return;
+
+    var lat = parseFloat(i.lat);
+    var lng = parseFloat(i.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    var marker = L.marker([lat, lng], {
+      icon: incidentPeopleIcon(i.status)
+    })
+    .addTo(incidentsLayer)
+    .bindPopup(
+      "<b>Vizov #" + i.id + "</b><br/>" +
+      "Status: " + statusUz(i.status)
+    );
+
+    if (selectedIncidentId && i.id === selectedIncidentId) {
+      marker.openPopup();
+    }
+  });
+}
+
+/* ARRIVAL STATS */
+function renderArrivalStats(list){
+  var tb = document.getElementById("arrivalTable");
+  if (!tb) return;
+
+  var rows = (list || []).filter(i => {
+    return ["ARRIVED","DONE","CLOSED"].includes(i.status) &&
+           sameLocalDay(i.arrived_at || i.closed_at || i.accepted_at);
+  });
+
+  rows.sort((a,b) => a.id - b.id);
+
+  if(!rows.length){
+    tb.innerHTML = "<tr><td colspan='5' class='muted'>Bugun yetib kelganlar yo‘q</td></tr>";
+    return;
+  }
+
+  tb.innerHTML = rows.map(i => {
+    var offName = i.assigned_officer_name || i.assigned_officer_username || (i.assigned_officer || "—");
+    var arrivalMins = diffMinutes(i.accepted_at, i.arrived_at);
+    var arrivalTxt = (arrivalMins == null) ? "—" : (arrivalMins + " min");
+    var shortTxt = (i.details ? String(i.details).slice(0, 36) + "..." : "—");
+    var link = "/dashboard/incidents/" + i.id + "/";
+
+    return (
+      `<tr>
+        <td><b>#${i.id}</b></td>
+        <td>${offName}</td>
+        <td>${arrivalTxt}</td>
+        <td>${shortTxt}</td>
+        <td><a class="btn btn-light" style="padding:8px 10px;display:inline-block;" href="${link}" target="_blank">Batafsil</a></td>
+      </tr>`
+    );
+  }).join("");
+}
+/* TOGGLE */
+function toggle(id){
+  var el = document.getElementById(id);
+  el.classList.toggle("open");
+}
+document.getElementById("toggleOnline").onclick = function(){ toggle("onlineBox"); };
+document.getElementById("toggleOffline").onclick = function(){ toggle("offlineBox"); };
+
+/* LOADERS */
+function loadOfficers(){
+  if (__officersInFlight) return Promise.resolve();
+  __officersInFlight = true;
+
+  return fetch("/api/admin/officers/")
+    .then(r => { if(!r.ok) throw new Error("officers api: " + r.status); return r.json(); })
+    .then(list => {
+      officersCache = list || [];
+      renderOfficerPanels(officersCache);
+      renderOfficers(officersCache);
+      updateDashboardTicker();
+    })
+    .catch(err => console.log(err))
+    .finally(() => { __officersInFlight = false; });
+}
+
+function loadIncidents(){
+  if (__incidentsInFlight) return Promise.resolve();
+  __incidentsInFlight = true;
+
+  return fetch("/api/incidents/")
+    .then(r => { if(!r.ok) throw new Error("incidents api: " + r.status); return r.json(); })
+    .then(list => {
+      incidentsCache = list || [];
+      renderIncidentsTable(incidentsCache);
+      renderArrivalStats(incidentsCache);
+      renderIncidentMarkers(incidentsCache);
+      updateDashboardTicker();
+    })
+    .catch(err => console.log("incidents error", err))
+    .finally(() => { __incidentsInFlight = false; });
+}
+
+function updateDashboardTicker(){
+  const officers = officersCache || [];
+  const incidents = incidentsCache || [];
+
+  const onlineCount = officers.filter(o => isOnlineByLastSeen(o,30)).length;
+  const offlineCount = officers.filter(o => !isOnlineByLastSeen(o,30)).length;
+  const totalIncidents = incidents.length;
+  const acceptedCount = incidents.filter(i => ["ACCEPTED","ARRIVED","DONE","CLOSED"].includes(i.status)).length;
+  const waitingCount = incidents.filter(i => ["NEW","ASSIGNED"].includes(i.status)).length;
+  const canceledCount = incidents.filter(i => i.status === "CANCELED").length;
+
+  const track = document.getElementById("dashboardTickerTrack");
+  if(!track) return;
+
+  const html =
+    '<span>🟢 Online hodimlar: <b class="tickerGreen">'+onlineCount+'</b></span>' +
+    '<span>⚫ Offline hodimlar: <b class="tickerGray">'+offlineCount+'</b></span>' +
+    '<span>📞 Jami vizovlar: <b class="tickerBlue">'+totalIncidents+'</b></span>' +
+    '<span>✅ Qabul qilingan: <b class="tickerGreen">'+acceptedCount+'</b></span>' +
+    '<span>⏳ Kutilayotgan: <b class="tickerYellow">'+waitingCount+'</b></span>' +
+    '<span>❌ Bekor qilingan: <b class="tickerRed">'+canceledCount+'</b></span>';
+
+  track.innerHTML = html + html;
+}
+
+/* MAP CLICK */
+window.cancelDraftMarker = function(){
+  if (clickMarker){
+    map.removeLayer(clickMarker);
+    clickMarker = null;
+  }
+  document.getElementById("lat").value = "";
+  document.getElementById("lng").value = "";
+  document.getElementById("address_text").value = "";
+  setMiniAlert("Draft marker tozalandi. Yangi nuqta tanlashingiz mumkin.");
+};
+
+map.on('click', function(e){
+  var lat = e.latlng.lat;
+  var lng = e.latlng.lng;
+
+  document.getElementById("lat").value = lat.toFixed(6);
+  document.getElementById("lng").value = lng.toFixed(6);
+
+  if (clickMarker) map.removeLayer(clickMarker);
+
+  clickMarker = L.marker([lat,lng]).addTo(map).bindPopup(
+    "<b>Vizov nuqtasi</b><br><div style='margin-top:6px'>Koordinata tanlandi</div>"
+  ).openPopup();
+
+  setMiniAlert(`Yangi nuqta tanlandi: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`);
+});
+
+document.getElementById("searchBtn").onclick = function(){
+  var q = document.getElementById("searchBox").value.trim();
+  if (!q){
+    alert("Manzil kiriting");
+    return;
+  }
+
+  var variants = [
+    q + ", Samarqand",
+    q + ", Samarqand shahri",
+    q + ", Samarqand viloyati"
+  ];
+
+  function isSamarqandResult(item){
+    if (!item || !item.display_name) return false;
+    var s = item.display_name.toLowerCase();
+    return s.indexOf("samarqand") !== -1 || s.indexOf("samarkand") !== -1;
+  }
+
+  function trySearch(index){
+    if (index >= variants.length){
+      alert("Samarqand bo‘yicha topilmadi");
+      return;
+    }
+
+    var query = encodeURIComponent(variants[index]);
+
+    fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + query + "&limit=5")
+      .then(function(r){
+        return r.json();
+      })
+      .then(function(list){
+        if (!list || !list.length){
+          trySearch(index + 1);
+          return;
+        }
+
+        var found = null;
+        for (var i = 0; i < list.length; i++) {
+          if (isSamarqandResult(list[i])) {
+            found = list[i];
+            break;
+          }
+        }
+
+        if (!found){
+          trySearch(index + 1);
+          return;
+        }
+
+        var lat = parseFloat(found.lat);
+        var lon = parseFloat(found.lon);
+
+        if (isNaN(lat) || isNaN(lon)){
+          trySearch(index + 1);
+          return;
+        }
+
+        map.setView([lat, lon], 16);
+
+        document.getElementById("lat").value = lat.toFixed(6);
+        document.getElementById("lng").value = lon.toFixed(6);
+        document.getElementById("address_text").value = found.display_name || "";
+
+        if (clickMarker) map.removeLayer(clickMarker);
+
+        clickMarker = L.marker([lat, lon]).addTo(map).bindPopup(
+          "<b>Qidiruv natijasi</b><br/>" +
+          "<div style='margin-top:6px'>" + (found.display_name || "") + "</div>"
+        ).openPopup();
+
+        setMiniAlert("Qidiruv natijasi topildi: <b>" + (found.display_name || q) + "</b>");
+      })
+      .catch(function(){
+        trySearch(index + 1);
+      });
+  }
+
+  trySearch(0);
+};
+
+document.getElementById("refreshBtn").onclick = function(){
+  loadOfficers();
+  loadIncidents();
+  setMiniAlert("Ma’lumotlar yangilanmoqda...");
+};
+
+/* OFFICER SEARCH + ASSIGN */
+function norm(s){ return String(s || "").toLowerCase().trim(); }
+
+function officerLabel(o){
+  const fn = (o.first_name || "").trim();
+  const ln = (o.last_name || "").trim();
+  const full = (fn + " " + ln).trim();
+  return full ? (full + " (" + (o.username || "") + ")") : (o.username || ("ID " + o.id));
+}
+
+function setPickedUI(){
+  document.getElementById("pickedOfficer").innerText =
+    selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
+
+  document.getElementById("pickedIncident").innerText =
+    selectedIncidentId ? ("#" + selectedIncidentId) : "—";
+
+  const btn = document.getElementById("assignBtn");
+  const ok = !!selectedOfficerId && !!selectedIncidentId;
+  btn.disabled = !ok;
+}
+
+window.focusOfficer = function(officerId){
+  const o = officersCache.find(x => x.id === officerId);
+  if (!o || !o.last_lat || !o.last_lng){
+    alert("Hodim lokatsiyasi yo‘q");
+    return;
+  }
+
+  selectedOfficerId = officerId;
+  setPickedUI();
+
+  map.setView([o.last_lat, o.last_lng], Math.max(map.getZoom(), 16));
+  const mk = officerMarkers[officerId];
+  if (mk) mk.openPopup();
+
+  setMiniAlert(`Hodim tanlandi: <b>${officerLabel(o)}</b>`);
+};
+
+function renderOfficerSearchResults(items){
+  const box = document.getElementById("officerSearchResults");
+  if (!items.length){
+    box.innerHTML = '<div class="muted" style="padding:10px 2px;">Topilmadi</div>';
+    return;
+  }
+
+  box.innerHTML = items.slice(0, 8).map(o => {
+    const online = isOnlineByLastSeen(o,30);
+    return (
+      `<div class="list-card" onclick="focusOfficer(${o.id})">
+        <div class="list-card-title">
+          <span>${officerLabel(o)}</span>
+          <span class="pill"><span class="dot ${online ? "" : "gray"}"></span>${online ? "Online" : "Offline"}</span>
+        </div>
+        <div class="muted" style="margin-top:8px;">Last seen: ${o.last_seen || "—"}</div>
+      </div>`
+    );
+  }).join("");
+}
+
+function handleOfficerSearch(){
+  const q = norm(document.getElementById("officerSearch").value);
+  if (!q){
+    document.getElementById("officerSearchResults").innerHTML = "";
+    return;
+  }
+
+  const found = (officersCache || []).filter(o => {
+    const s = norm(o.username) + " " + norm(o.first_name) + " " + norm(o.last_name);
+    return s.includes(q);
+  });
+
+  renderOfficerSearchResults(found);
+}
+
+async function assignSelected(){
+  if (!selectedIncidentId || !selectedOfficerId) return;
+
+  const csrftoken = getCookie("csrftoken");
+
+  try{
+    const r = await fetch(`/api/incidents/${selectedIncidentId}/assign/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify({ officer_id: selectedOfficerId })
+    });
+
+    if (!r.ok){
+      const txt = await r.text();
+      alert("Biriktirish xato: " + r.status + "\n" + txt);
+      return;
+    }
+
+    await loadIncidents();
+    setMiniAlert(`Vizov <b>#${selectedIncidentId}</b> hodimga muvaffaqiyatli biriktirildi.`);
+    alert("✅ Biriktirildi");
+  }catch(e){
+    alert("Network xato: " + (e.message || e));
+  }
+}
+
+document.getElementById("assignBtn").onclick = assignSelected;
+document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
+
+/* START */
+setPickedUI();
+loadOfficers();
+loadIncidents();
+updateDashboardTicker();
+
+setInterval(function(){
+  loadOfficers();
+  loadIncidents();
+}, 7000);
+</script>
+
+</body>
+</html>

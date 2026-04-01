@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Home - Incident Group</title>
+  <style>
+    body{font-family:Arial;margin:0;background:#f6f7fb}
+    .wrap{max-width:900px;margin:30px auto;padding:0 16px}
+    .top{display:flex;justify-content:space-between;align-items:center}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:16px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+    a.btn{display:block;text-decoration:none;text-align:center;padding:14px 10px;border-radius:12px;border:1px solid #111827;background:#111827;color:#fff}
+    a.btn.light{background:#fff;color:#111827}
+    .muted{color:#6b7280;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h2 style="margin:0">Incident group</h2>
+      <a class="btn light" href="/dashboard/">Dashboard</a>
+    </div>
+
+    <div class="card">
+      <div class="muted">Qaysi xizmatga vizov yuboramiz?</div>
+      <div class="grid">
+        <a class="btn" href="/dashboard/?group=PROF">1) PROF INS</a>
+        <a class="btn" href="/dashboard/?group=PPX">2) PPX</a>
+        <a class="btn" href="/dashboard/?group=YPX">3) YPX</a>
+      </div>
+      <div class="muted" style="margin-top:10px;">
+        Eslatma: hozircha bu faqat tanlash. Keyin dashboarddagi forma “group” ni avtomatik olib ketadigan qilamiz.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

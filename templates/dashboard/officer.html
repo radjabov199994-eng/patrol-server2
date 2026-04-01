@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patrol • Hodim</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a33;
+      --line:rgba(255,255,255,.10);
+      --text:#eaf0ff;
+      --muted:#a9b3c7;
+      --accent:#4f46e5;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --chip:rgba(255,255,255,.05);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:linear-gradient(180deg,#070b14,#0b1220);
+      color:var(--text);
+    }
+    a{color:inherit;text-decoration:none}
+    .topbar{
+      position:sticky; top:0; z-index:99;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      background:rgba(11,18,32,.88);
+      border-bottom:1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:10px; align-items:center}
+    .logo{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px rgba(79,70,229,.16)}
+    .title{font-weight:900; letter-spacing:.2px}
+    .sub{font-size:12px;color:var(--muted)}
+    .wrap{max-width:980px;margin:0 auto;padding:12px}
+    .card{
+      background:rgba(15,26,51,.75);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      margin:12px 0;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .muted{color:var(--muted);font-size:12px}
+    .divider{height:1px;background:var(--line);margin:10px 0}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      font-size:12px;color:#fff;
+      background:rgba(255,255,255,.04);
+    }
+    .dot{width:8px;height:8px;border-radius:50%}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+    .dot.danger{background:var(--danger)}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      user-select:none;
+    }
+    .btn:active{transform:scale(.99)}
+    .btn.small{padding:9px 10px;border-radius:12px;font-weight:900}
+    .btn.primary{background:rgba(79,70,229,.22); border-color:rgba(79,70,229,.45)}
+    .btn.success{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.40)}
+    .btn.warn{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.40)}
+    .btn.danger{background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.40)}
+    .btn.ghost{background:rgba(255,255,255,.03)}
+    .grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .kv{font-size:13px;line-height:1.5}
+    .kv b{color:#fff}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .badge{
+      font-size:11px;
+      padding:5px 8px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .miniInfo{
+      display:flex;gap:8px;flex-wrap:wrap;margin-top:8px
+    }
+    .warnBox{
+      border:1px solid rgba(245,158,11,.35);
+      background:rgba(245,158,11,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .okBox{
+      border:1px solid rgba(34,197,94,.35);
+      background:rgba(34,197,94,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .dangerBox{
+      border:1px solid rgba(239,68,68,.35);
+      background:rgba(239,68,68,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .hide{display:none}
+  </style>
+</head>
+<body>
+
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h2>Hodim paneli</h2>
+
+  <form method="POST" action="/accounts/logout/">
+    {% csrf_token %}
+    <button type="submit" class="btn">Chiqish</button>
+  </form>
+</div>
+
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="title">Patrol • Hodim</div>
+      <div class="sub">Mobil panel (OFFICER)</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a class="btn small ghost" href="/dashboard/">🗺️ Admin</a>
+    <a class="btn small" href="/accounts/logout/">🚪 Chiqish</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- GPS banner -->
+  <div class="card" id="gps_card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">📍 GPS holati</div>
+        <div class="muted" id="gps_status">Kutyapti...</div>
+      </div>
+      <div class="pill" id="gps_pill">
+        <span class="dot warn"></span><span class="mono">GPS</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="muted" id="net_status">🌐 Internet: tekshiryapti...</div>
+    <div class="muted" id="queue_status">🧾 Offline navbat: 0</div>
+  </div>
+
+  <!-- Profile -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">👮 Hodim ma’lumot</div>
+        <div class="muted">Profil</div>
+      </div>
+      <div class="pill">
+        <span class="dot ok"></span><span class="mono">{{ me.username }}</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="kv">
+      <b>Ism:</b> {{ me.first_name }}<br>
+      <b>Familiya:</b> {{ me.last_name }}<br>
+      <b>Lavozim:</b> {{ me.position }}<br>
+    </div>
+  </div>
+
+  <!-- Incidents -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">📞 Biriktirilgan vizovlar</div>
+        <div class="muted">Status ketma-ket: ACCEPTED → ARRIVED → DONE → CLOSED</div>
+      </div>
+      <button class="btn small ghost" type="button" onclick="manualRefresh()">🔄 Yangilash</button>
+    </div>
+
+    <div class="divider"></div>
+
+    {% if incidents %}
+      <div class="grid">
+      {% for i in incidents %}
+        <div class="card" style="margin:0" data-incid="{{ i.id }}" data-status="{{ i.status }}">
+          <div class="row">
+            <div>
+              <div style="font-weight:900">#{{ i.id }} — {{ i.title }}</div>
+              <div class="muted">Yaratilgan: {{ i.created_at }}</div>
+            </div>
+
+            <div class="pill">
+              {% if i.status == "NEW" or i.status == "ASSIGNED" %}
+                <span class="dot warn"></span>
+              {% elif i.status == "ACCEPTED" or i.status == "ARRIVED" or i.status == "DONE" or i.status == "CLOSED" %}
+                <span class="dot ok"></span>
+              {% else %}
+                <span class="dot danger"></span>
+              {% endif %}
+              <span class="mono">{{ i.status }}</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kv">
+            <b>Tel:</b> <span class="mono">{{ i.caller_phone|default:"—" }}</span><br>
+            <b>Manzil:</b> {{ i.address_text|default:"—" }}<br>
+          </div>
+
+          <!-- status tarix -->
+          <div class="miniInfo">
+            {% if i.accepted_at %}<span class="badge">✅ Qabul: {{ i.accepted_at }}</span>{% endif %}
+            {% if i.arrived_at %}<span class="badge">📍 Yetib: {{ i.arrived_at }}</span>{% endif %}
+          </div>
+
+          <!-- masofa -->
+          <div class="miniInfo">
+            <span class="badge" id="dist_{{ i.id }}">🧭 Masofa: hisoblanmoqda...</span>
+          </div>
+
+          <div class="actions">
+            <!-- map links -->
+            <a class="btn" href="https://www.google.com/maps?q={{ i.lat }},{{ i.lng }}" target="_blank">🗺️ Google</a>
+            <a class="btn" href="https://yandex.com/maps/?pt={{ i.lng }},{{ i.lat }}&z=16&l=map" target="_blank">🧭 Yandex</a>
+
+            <!-- call -->
+            {% if i.caller_phone %}
+              <a class="btn success" href="tel:{{ i.caller_phone }}">📞 Qo‘ng‘iroq</a>
+            {% else %}
+              <span class="btn ghost" style="opacity:.7;cursor:not-allowed;">📞 Tel yo‘q</span>
+            {% endif %}
+
+            <!-- status buttons (sequential) -->
+            {% if i.status == "ASSIGNED" or i.status == "NEW" %}
+              <button class="btn primary" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'ACCEPTED')">✅ Qabul qildim</button>
+            {% endif %}
+
+            {% if i.status == "ACCEPTED" %}
+              <button class="btn success" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'ARRIVED')">📍 Yetib keldim</button>
+            {% endif %}
+
+            {% if i.status == "ARRIVED" %}
+              <button class="btn warn" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'DONE')">📝 Tugatdim</button>
+            {% endif %}
+
+            {% if i.status == "DONE" %}
+              <button class="btn danger" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'CLOSED')">🔒 Yopdim</button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="muted">Hozircha sizga vizov biriktirilmagan.</div>
+    {% endif %}
+  </div>
+
+  <!-- Notification info -->
+  <div class="card" style="margin:0"
+     data-incid="{{ i.id }}"
+     data-status="{{ i.status }}">
+
+    <div class="row">
+      <div>
+        <div style="font-weight:900">🔔 Ogohlantirish</div>
+        <div class="muted">Yangi vizov tushsa vibratsiya + “siren” ovoz</div>
+      </div>
+      <button class="btn small ghost" type="button" onclick="enableSound()">🔊 Ovozga ruxsat</button>
+    </div>
+    <div class="divider"></div>
+    <div id="notify_box" class="warnBox">
+      Eslatma: telefon brauzerlarida ovoz chiqishi uchun bir marta tugmani bosib ruxsat berish kerak.
+    </div>
+  </div>
+
+</div>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patrol • Hodim</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a33;
+      --line:rgba(255,255,255,.10);
+      --text:#eaf0ff;
+      --muted:#a9b3c7;
+      --accent:#4f46e5;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --chip:rgba(255,255,255,.05);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:linear-gradient(180deg,#070b14,#0b1220);
+      color:var(--text);
+    }
+    a{color:inherit;text-decoration:none}
+    .topbar{
+      position:sticky; top:0; z-index:99;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      background:rgba(11,18,32,.88);
+      border-bottom:1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:10px; align-items:center}
+    .logo{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px rgba(79,70,229,.16)}
+    .title{font-weight:900; letter-spacing:.2px}
+    .sub{font-size:12px;color:var(--muted)}
+    .wrap{max-width:980px;margin:0 auto;padding:12px}
+    .card{
+      background:rgba(15,26,51,.75);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      margin:12px 0;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .muted{color:var(--muted);font-size:12px}
+    .divider{height:1px;background:var(--line);margin:10px 0}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      font-size:12px;color:#fff;
+      background:rgba(255,255,255,.04);
+    }
+    .dot{width:8px;height:8px;border-radius:50%}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+    .dot.danger{background:var(--danger)}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      user-select:none;
+    }
+    .btn:active{transform:scale(.99)}
+    .btn.small{padding:9px 10px;border-radius:12px;font-weight:900}
+    .btn.primary{background:rgba(79,70,229,.22); border-color:rgba(79,70,229,.45)}
+    .btn.success{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.40)}
+    .btn.warn{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.40)}
+    .btn.danger{background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.40)}
+    .btn.ghost{background:rgba(255,255,255,.03)}
+    .grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .kv{font-size:13px;line-height:1.5}
+    .kv b{color:#fff}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .badge{
+      font-size:11px;
+      padding:5px 8px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .miniInfo{
+      display:flex;gap:8px;flex-wrap:wrap;margin-top:8px
+    }
+    .warnBox{
+      border:1px solid rgba(245,158,11,.35);
+      background:rgba(245,158,11,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .okBox{
+      border:1px solid rgba(34,197,94,.35);
+      background:rgba(34,197,94,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .dangerBox{
+      border:1px solid rgba(239,68,68,.35);
+      background:rgba(239,68,68,.10);
+      padding:10px;border-radius:14px;
+      color:#fff;
+    }
+    .hide{display:none}
+/* 🚨 ALERT flash */
+.alertFlash{
+  animation: flashRed 0.45s ease-in-out infinite;
+}
+@keyframes flashRed{
+  0%,100% { filter:none; }
+  50% { filter: drop-shadow(0 0 18px rgba(239,68,68,.65)); }
+}
+.alertBanner{
+  position: fixed;
+  left: 12px; right: 12px; top: 12px;
+  z-index: 99999;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(239,68,68,.92);
+  color: white;
+  font-weight: 800;
+  display:none;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.alertBanner.show{ display:block; }
+
+  </style>
+</head>
+<body>
+<div id="alertBanner" class="alertBanner">🚨 Yangi vizov keldi!</div>
+
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h2>Hodim paneli</h2>
+
+  <form method="POST" action="/accounts/logout/">
+    {% csrf_token %}
+    <button type="submit" class="btn">Chiqish</button>
+  </form>
+</div>
+
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="title">Patrol • Hodim</div>
+      <div class="sub">Mobil panel (OFFICER)</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a class="btn small ghost" href="/dashboard/">🗺️ Admin</a>
+    <a class="btn small" href="/accounts/logout/">🚪 Chiqish</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- GPS banner -->
+  <div class="card" id="gps_card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">📍 GPS holati</div>
+        <div class="muted" id="gps_status">Kutyapti...</div>
+      </div>
+      <div class="pill" id="gps_pill">
+        <span class="dot warn"></span><span class="mono">GPS</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="muted" id="net_status">🌐 Internet: tekshiryapti...</div>
+    <div class="muted" id="queue_status">🧾 Offline navbat: 0</div>
+  </div>
+
+  <!-- Profile -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">👮 Hodim ma’lumot</div>
+        <div class="muted">Profil</div>
+      </div>
+      <div class="pill">
+        <span class="dot ok"></span><span class="mono">{{ me.username }}</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="kv">
+      <b>Ism:</b> {{ me.first_name }}<br>
+      <b>Familiya:</b> {{ me.last_name }}<br>
+      <b>Lavozim:</b> {{ me.position }}<br>
+    </div>
+  </div>
+
+  <!-- Incidents -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <div style="font-weight:900">📞 Biriktirilgan vizovlar</div>
+        <div class="muted">Status ketma-ket: ACCEPTED → ARRIVED → DONE → CLOSED</div>
+      </div>
+      <button class="btn small ghost" type="button" onclick="manualRefresh()">🔄 Yangilash</button>
+    </div>
+
+    <div class="divider"></div>
+
+    {% if incidents %}
+      <div class="grid">
+      {% for i in incidents %}
+        <div class="card" style="margin:0" data-incid="{{ i.id }}" data-status="{{ i.status }}">
+          <div class="row">
+            <div>
+              <div style="font-weight:900">#{{ i.id }} — {{ i.title }}</div>
+              <div class="muted">Yaratilgan: {{ i.created_at }}</div>
+            </div>
+
+            <div class="pill">
+              {% if i.status == "NEW" or i.status == "ASSIGNED" %}
+                <span class="dot warn"></span>
+              {% elif i.status == "ACCEPTED" or i.status == "ARRIVED" or i.status == "DONE" or i.status == "CLOSED" %}
+                <span class="dot ok"></span>
+              {% else %}
+                <span class="dot danger"></span>
+              {% endif %}
+              <span class="mono">{{ i.status }}</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kv">
+            <b>Tel:</b> <span class="mono">{{ i.caller_phone|default:"—" }}</span><br>
+            <b>Manzil:</b> {{ i.address_text|default:"—" }}<br>
+          </div>
+
+          <!-- status tarix -->
+          <div class="miniInfo">
+            {% if i.accepted_at %}<span class="badge">✅ Qabul: {{ i.accepted_at }}</span>{% endif %}
+            {% if i.arrived_at %}<span class="badge">📍 Yetib: {{ i.arrived_at }}</span>{% endif %}
+          </div>
+
+          <!-- masofa -->
+          <div class="miniInfo">
+            <span class="badge" id="dist_{{ i.id }}">🧭 Masofa: hisoblanmoqda...</span>
+          </div>
+
+          <div class="actions">
+            <!-- map links -->
+            <a class="btn" href="https://www.google.com/maps?q={{ i.lat }},{{ i.lng }}" target="_blank">🗺️ Google</a>
+            <a class="btn" href="https://yandex.com/maps/?pt={{ i.lng }},{{ i.lat }}&z=16&l=map" target="_blank">🧭 Yandex</a>
+
+            <!-- call -->
+            {% if i.caller_phone %}
+              <a class="btn success" href="tel:{{ i.caller_phone }}">📞 Qo‘ng‘iroq</a>
+            {% else %}
+              <span class="btn ghost" style="opacity:.7;cursor:not-allowed;">📞 Tel yo‘q</span>
+            {% endif %}
+
+            <!-- status buttons (sequential) -->
+            {% if i.status == "ASSIGNED" or i.status == "NEW" %}
+              <button class="btn primary" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'ACCEPTED')">✅ Qabul qildim</button>
+            {% endif %}
+
+            {% if i.status == "ACCEPTED" %}
+              <button class="btn success" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'ARRIVED')">📍 Yetib keldim</button>
+            {% endif %}
+
+            {% if i.status == "ARRIVED" %}
+              <button class="btn warn" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'DONE')">📝 Tugatdim</button>
+            {% endif %}
+
+            {% if i.status == "DONE" %}
+              <button class="btn danger" type="button"
+                      onclick="setIncidentStatus(event, {{ i.id }}, 'CLOSED')">🔒 Yopdim</button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="muted">Hozircha sizga vizov biriktirilmagan.</div>
+    {% endif %}
+  </div>
+
+  <!-- Notification info -->
+  <div class="card" style="margin:0"
+     data-incid="{{ i.id }}"
+     data-status="{{ i.status }}">
+
+    <div class="row">
+      <div>
+        <div style="font-weight:900">🔔 Ogohlantirish</div>
+        <div class="muted">Yangi vizov tushsa vibratsiya + “siren” ovoz</div>
+      </div>
+      <button class="btn small ghost" type="button" onclick="enableSound()">🔊 Ovozga ruxsat</button>
+    </div>
+    <div class="divider"></div>
+    <div id="notify_box" class="warnBox">
+      Eslatma: telefon brauzerlarida ovoz chiqishi uchun bir marta tugmani bosib ruxsat berish kerak.
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =================== BASIC =================== */
+function getCookie(name) {
+  const v = `; ${document.cookie}`;
+  const parts = v.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return "";
+}
+function qs(id){ return document.getElementById(id); }
+
+/* =================== ONLINE/OFFLINE =================== */
+function updateNetUI(){
+  const online = navigator.onLine;
+  if (qs("net_status")){
+    qs("net_status").innerText = online ? "🌐 Internet: ONLINE ✅" : "🌐 Internet: OFFLINE ❌ (navbatga yozilyapti)";
+  }
+}
+window.addEventListener("online", () => { updateNetUI(); flushQueue(); });
+window.addEventListener("offline", updateNetUI);
+
+/* =================== GPS UI =================== */
+function setGpsUI(state, text){
+  const pill = qs("gps_pill");
+  if (qs("gps_status")) qs("gps_status").innerText = text;
+
+  if (!pill) return;
+
+  if (state === "ok"){
+    pill.innerHTML = '<span class="dot ok"></span><span class="mono">GPS</span>';
+  } else if (state === "err"){
+    pill.innerHTML = '<span class="dot danger"></span><span class="mono">GPS</span>';
+  } else {
+    pill.innerHTML = '<span class="dot warn"></span><span class="mono">GPS</span>';
+  }
+}
+
+/* =================== VISUAL ALERT (FLASH) =================== */
+function startVisualAlert(){
+  document.body.classList.add("alertFlash");
+  const b = qs("alertBanner");
+  if (b) b.classList.add("show");
+}
+function stopVisualAlert(){
+  document.body.classList.remove("alertFlash");
+  const b = qs("alertBanner");
+  if (b) b.classList.remove("show");
+}
+
+/* =================== OFFLINE QUEUE (status updates) =================== */
+const QUEUE_KEY = "patrol_offline_queue_v1";
+function getQueue(){
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); } catch(e){ return []; }
+}
+function setQueue(arr){
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(arr));
+  if (qs("queue_status")) qs("queue_status").innerText = "🧾 Offline navbat: " + arr.length;
+}
+function enqueue(item){
+  const q = getQueue();
+  q.push(item);
+  setQueue(q);
+}
+async function flushQueue(){
+  if (!navigator.onLine) return;
+  const q = getQueue();
+  if (!q.length){ setQueue([]); return; }
+
+  let remaining = [];
+  for (const item of q){
+    const ok = await postStatus(item.id, item.status, true);
+    if (!ok) remaining.push(item);
+  }
+  setQueue(remaining);
+}
+
+/* =================== STATUS POST =================== */
+async function postStatus(id, status, silent=false){
+  const csrftoken = getCookie("csrftoken");
+  try {
+    const r = await fetch(`/api/officer/incidents/${id}/status/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ status })
+    });
+
+    if (!r.ok) {
+      if (!silent) {
+        const txt = await r.text();
+        alert("Status xato: " + r.status + "\n" + txt);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (!silent) alert("Network xato: " + (e.message || e));
+    return false;
+  }
+}
+
+async function setIncidentStatus(ev, id, status) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+  // ✅ signalni o‘chirib qo‘yamiz
+  stopVisualAlert();
+
+  if (!navigator.onLine){
+    enqueue({ id, status, ts: Date.now() });
+    alert("Internet yo‘q. Navbatga qo‘shildi ✅");
+    return;
+  }
+
+  const ok = await postStatus(id, status);
+  if (ok) {
+    // ✅ status o‘zgarganini darhol ko‘rsatish uchun
+    await pollOfficerIncidents(true);
+  }
+}
+
+/* =================== GPS SEND =================== */
+let lastMyPos = null;
+
+async function sendLocation(lat, lng, acc) {
+  const csrftoken = getCookie("csrftoken");
+  setGpsUI("wait", "Yuboryapman... (" + lat.toFixed(5) + ", " + lng.toFixed(5) + ")");
+
+  try {
+    const r = await fetch("/api/officer/location/", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+      body: JSON.stringify({ latitude: lat, longitude: lng, accuracy: acc })
+    });
+
+    setGpsUI("ok", "Yuborildi ✅ status=" + r.status);
+    lastMyPos = { lat, lng };
+  } catch (e) {
+    setGpsUI("err", "Yuborilmadi ❌");
+  }
+}
+
+function startTracking() {
+  if (!navigator.geolocation) {
+    setGpsUI("err", "Brauzer GPS-ni qo‘llamaydi");
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    (pos) => sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+    (err) => setGpsUI("err", "GPS xato: " + err.message),
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+  );
+}
+
+/* =================== SIREN / VIBRATE =================== */
+let audioCtx = null;
+
+function beep(duration=240, freq=880){
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sawtooth";
+  o.frequency.value = freq;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.02);
+  o.start();
+  setTimeout(() => {
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.02);
+    o.stop(audioCtx.currentTime + 0.04);
+  }, duration);
+}
+
+function siren(){
+  // 📳 3 marta vibratsiya
+  if (navigator.vibrate){
+    navigator.vibrate([300,200,300,200,300]);
+  }
+
+  // 🔊 5 marta sirena
+  if (!audioCtx) return;
+
+  let n = 0;
+  const total = 5;
+
+  const one = () => {
+    beep(220, 1050);
+    setTimeout(() => beep(220, 780), 260);
+    n++;
+    if (n < total) setTimeout(one, 700);
+  };
+  one();
+}
+
+function enableSound(){
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (qs("notify_box")){
+      qs("notify_box").className = "okBox";
+      qs("notify_box").innerText = "Ovoz ruxsat berildi ✅ Endi yangi vizovda siren ishlaydi.";
+    }
+  }catch(e){
+    if (qs("notify_box")){
+      qs("notify_box").className = "dangerBox";
+      qs("notify_box").innerText = "Ovoz yoqilmadi ❌ (brauzer cheklovi)";
+    }
+  }
+}
+
+/* =================== NOTIFICATIONS =================== */
+async function enableNotifications(){
+  if (!("Notification" in window)) {
+    alert("Bu brauzer Notificationni qo‘llamaydi");
+    return;
+  }
+  const p = await Notification.requestPermission();
+  if (p !== "granted") alert("Bildirish ruxsati berilmadi");
+}
+
+function fireNotification(){
+  if ("Notification" in window && Notification.permission === "granted"){
+    new Notification("🚨 Yangi vizov!", {
+      body: "Zudlik bilan panelga kiring va qabul qiling.",
+      silent: true
+    });
+  }
+}
+
+/* =================== AUTO POLL (NEW INCIDENT + AUTO UPDATE) =================== */
+const SEEN_KEY = "patrol_seen_incidents_api_v1";
+
+function getCurrentIdsFromDom(){
+  const els = document.querySelectorAll("[data-incid]");
+  return Array.from(els)
+    .map(e => parseInt(e.getAttribute("data-incid"), 10))
+    .filter(Boolean)
+    .sort((a,b)=>a-b);
+}
+
+function saveSeen(ids){
+  localStorage.setItem(SEEN_KEY, JSON.stringify(ids || []));
+}
+function loadSeen(){
+  try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); } catch(e){ return []; }
+}
+
+async function pollOfficerIncidents(forceReload=false){
+  try{
+    const r = await fetch("/api/incidents/?_=" + Date.now(), { credentials: "include" });
+    if(!r.ok) return;
+
+    const list = await r.json();
+    const apiIds = (list || []).map(i=>i.id).filter(Boolean).sort((a,b)=>a-b);
+
+    const domIds = getCurrentIdsFromDom();
+    const prevIds = loadSeen();
+
+    // ✅ NEW DETECT
+    const prevSet = new Set(prevIds);
+    const newOnes = apiIds.filter(id => !prevSet.has(id));
+
+    if (newOnes.length){
+      startVisualAlert();
+      siren();
+      fireNotification();
+    }
+
+    // seen yangilash
+    saveSeen(apiIds);
+
+    // ✅ DOM bilan API farq bo‘lsa (status o‘zgargan / yangi keldi / yo‘qoldi) — auto reload
+    const domStr = JSON.stringify(domIds);
+    const apiStr = JSON.stringify(apiIds);
+
+    if (forceReload || domStr !== apiStr){
+      // status o‘zgarishini ko‘rsatish uchun refresh
+      location.reload();
+    }
+  }catch(e){
+    // jim
+  }
+}
+
+/* =================== MANUAL REFRESH =================== */
+function manualRefresh(){
+  location.reload();
+}
+
+/* =================== INIT =================== */
+(function init(){
+  updateNetUI();
+  setQueue(getQueue());
+  startTracking();
+  flushQueue();
+
+  // birinchi kirishda seen ni DOM’dan saqlab qo‘yamiz (false alarm bo‘lmasin)
+  const first = getCurrentIdsFromDom();
+  if (!loadSeen().length && first.length) saveSeen(first);
+
+  // 2 soniyada tekshiradi (refresh shart emas)
+  setInterval(() => pollOfficerIncidents(false), 2000);
+})();
+</script>
+
+</body>
+</html>

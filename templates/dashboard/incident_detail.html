@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Murojaat #{{ inc.id }}</title>
+  <style>
+    body{font-family:Arial;margin:0;padding:16px;background:#f6f7fb}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;max-width:900px;margin:0 auto}
+    .muted{color:#6b7280;font-size:13px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .pill{display:inline-block;border:1px solid #11182733;padding:5px 10px;border-radius:999px;font-size:12px}
+    a{color:#111827;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin:0 0 8px 0">Murojaat #{{ inc.id }}</h2>
+    <div class="muted">Status: <span class="pill">{{ inc.status }}</span></div>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0"/>
+
+    <div class="row">
+      <div style="flex:1;min-width:260px">
+        <b>Murojaatchi:</b> {{ inc.victim_first_name }} {{ inc.victim_last_name }}<br>
+        <b>Tel:</b> {{ inc.caller_phone|default:"—" }}<br>
+        <b>Manzil:</b> {{ inc.address_text|default:"—" }}<br>
+      </div>
+
+      <div style="flex:1;min-width:260px">
+        <b>Hodim:</b> {{ inc.assigned_officer.username|default:"—" }}<br>
+        <b>Qabul:</b> {{ inc.accepted_at|default:"—" }}<br>
+        <b>Yetib keldi:</b> {{ inc.arrived_at|default:"—" }}<br>
+        <b>Yopildi:</b> {{ inc.closed_at|default:"—" }}<br>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <b>Hodisa tafsiloti:</b><br>
+      <div class="muted" style="white-space:pre-wrap">{{ inc.details|default:"—" }}</div>
+    </div>
+
+    <div style="margin-top:14px" class="row">
+      <a class="pill" target="_blank" href="https://www.google.com/maps?q={{ inc.lat }},{{ inc.lng }}">Google Maps</a>
+      <a class="pill" target="_blank" href="https://yandex.com/maps/?pt={{ inc.lng }},{{ inc.lat }}&z=16&l=map">Yandex</a>
+      <a class="pill" href="/dashboard/">← Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

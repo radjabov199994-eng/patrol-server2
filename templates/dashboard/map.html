@@ -454,6 +454,30 @@
     gap:14px;
   }
 
+  .panel-collapsible .panel-body{
+    display:none;
+  }
+
+  .panel-collapsible.open .panel-body{
+    display:block;
+    animation:fadeSlide .22s ease;
+  }
+
+  .panel-toggle-head{
+    cursor:pointer;
+    user-select:none;
+  }
+
+  .panel-toggle-head .chev{
+    font-weight:900;
+    opacity:.8;
+  }
+
+  @keyframes fadeSlide{
+    from{opacity:.35;transform:translateY(-6px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
   table{
     width:100%;
     border-collapse:collapse;
@@ -747,14 +771,16 @@
       </div>
 
       <div class="bottom-grid">
-        <div class="panel">
-          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="panel panel-collapsible" id="incidentsPanel">
+          <div class="panel-head panel-toggle-head" id="incidentsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Murojaatlar holati</h3>
               <div class="panel-sub">Biriktirilgan, qabul qilingan, yetib borilgan va yopilgan murojaatlar ro‘yxati</div>
             </div>
-
-            <a class="btn btn-light" href="/reports/daily.xlsx" target="_blank">📥 Excel yuklab olish</a>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <a class="btn btn-light" href="/reports/daily.xlsx" target="_blank">📥 Excel yuklab olish</a>
+              <span class="chev">▾</span>
+            </div>
           </div>
 
           <div class="panel-body">
@@ -779,14 +805,16 @@
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="panel panel-collapsible" id="arrivalsPanel">
+          <div class="panel-head panel-toggle-head" id="arrivalsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Bugungi yetib borishlar</h3>
               <div class="panel-sub">Qisqacha jadval. To‘liq ma’lumot Excel’da.</div>
             </div>
-
-            <a class="btn btn-light" id="excelBtn" href="/reports/daily.xlsx" target="_blank">📊 Excel ochish</a>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <a class="btn btn-light" id="excelBtn" href="/reports/daily.xlsx" target="_blank">📊 Excel ochish</a>
+              <span class="chev">▾</span>
+            </div>
           </div>
 
           <div class="panel-body">
@@ -1008,12 +1036,17 @@ function officerCarIcon(o){
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
     <defs>
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="3"/>
+        <feGaussianBlur stdDeviation="4"/>
       </filter>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#e5e7eb" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#94a3b8" stop-opacity=".65"/>
+      </linearGradient>
     </defs>
-    <circle cx="32" cy="32" r="28" fill="${color}" opacity="0.16" filter="url(#glow)"/>
+    <circle cx="32" cy="32" r="28" fill="${color}" opacity="0.22" filter="url(#glow)"/>
     <path d="M12 36c0-8 6-12 14-12h12c8 0 14 4 14 12v8H12z" fill="${color}"/>
-    <rect x="18" y="28" width="28" height="8" rx="4" fill="#0b1220" opacity="0.5"/>
+    <path d="M14 34h36" stroke="url(#metal)" stroke-width="2" opacity=".75"/>
+    <rect x="18" y="28" width="28" height="8" rx="4" fill="#0b1220" opacity="0.55"/>
     <circle cx="22" cy="48" r="6" fill="#111827"/>
     <circle cx="42" cy="48" r="6" fill="#111827"/>
     <circle cx="22" cy="48" r="3" fill="#cbd5e1"/>
@@ -1026,7 +1059,7 @@ function officerCarIcon(o){
   if (st === "ARRIVED") pulseCls = "pulse slow";
 
   const key = "car|" + color + "|" + pulseCls;
-  return cachedDivIcon(key, () => svgToDivIcon(svg, 44, 22, 22, pulseCls, color));
+  return cachedDivIcon(key, () => svgToDivIcon(svg, 48, 24, 24, pulseCls, color));
 }
 
 function incidentPeopleIcon(status){
@@ -1042,8 +1075,12 @@ function incidentPeopleIcon(status){
       <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
         <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.35"/>
       </filter>
+      <radialGradient id="pulseGrad" cx="30%" cy="25%" r="75%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".45"/>
+        <stop offset="100%" stop-color="${badge}" stop-opacity=".88"/>
+      </radialGradient>
     </defs>
-    <path d="M32 60C18 44 12 36 12 26a20 20 0 0 1 40 0c0 10-6 18-20 34z" fill="${badge}" filter="url(#shadow)"/>
+    <path d="M32 60C18 44 12 36 12 26a20 20 0 0 1 40 0c0 10-6 18-20 34z" fill="url(#pulseGrad)" filter="url(#shadow)"/>
     <circle cx="32" cy="26" r="14" fill="#fff" opacity="0.14"/>
     <circle cx="27" cy="24" r="5" fill="#fde68a"/>
     <circle cx="37" cy="24" r="5" fill="#fbcfe8"/>
@@ -1051,11 +1088,12 @@ function incidentPeopleIcon(status){
     <path d="M28 38c1-6 6-9 9-9s8 3 9 9" fill="#fbcfe8"/>
   </svg>`;
 
-  let blinkCls = "";
-  if (["NEW","ASSIGNED","ACCEPTED"].includes(status)) blinkCls = "blink";
+  let blinkCls = "pulse";
+  if (["NEW","ASSIGNED","ACCEPTED"].includes(status)) blinkCls = "blink fast";
+  if (status === "ARRIVED") blinkCls = "pulse slow";
 
   const key = "inc|" + badge + "|" + blinkCls;
-  return cachedDivIcon(key, () => svgToDivIcon(svg, 44, 22, 44, blinkCls, badge));
+  return cachedDivIcon(key, () => svgToDivIcon(svg, 48, 24, 46, blinkCls, badge));
 }
 
 /* ROUTES */
@@ -1192,11 +1230,25 @@ function renderOfficers(list) {
 }
 
 function renderOfficerPanels(list){
+  if (!Array.isArray(list)) {
+    const onlineCountEl = document.getElementById("onlineCount");
+    const offlineCountEl = document.getElementById("offlineCount");
+    const onlineBoxEl = document.getElementById("onlineBox");
+    const offlineBoxEl = document.getElementById("offlineBox");
+    if (onlineCountEl) onlineCountEl.innerText = "0";
+    if (offlineCountEl) offlineCountEl.innerText = "0";
+    if (onlineBoxEl) onlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    if (offlineBoxEl) offlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    return;
+  }
+
   var online = list.filter(o => isOnlineByLastSeen(o, 30));
   var offline = list.filter(o => !isOnlineByLastSeen(o, 30));
 
-  document.getElementById("onlineCount").innerText = online.length;
-  document.getElementById("offlineCount").innerText = offline.length;
+  const onlineCountEl = document.getElementById("onlineCount");
+  const offlineCountEl = document.getElementById("offlineCount");
+  if (onlineCountEl) onlineCountEl.innerText = online.length;
+  if (offlineCountEl) offlineCountEl.innerText = offline.length;
 
   function row(o){
     var onlineNow = isOnlineByLastSeen(o, 30);
@@ -1212,11 +1264,15 @@ function renderOfficerPanels(list){
     );
   }
 
-  document.getElementById("onlineBox").innerHTML =
-    online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  const onlineBoxEl = document.getElementById("onlineBox");
+  const offlineBoxEl = document.getElementById("offlineBox");
 
-  document.getElementById("offlineBox").innerHTML =
-    offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  if (onlineBoxEl) {
+    onlineBoxEl.innerHTML = online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  }
+  if (offlineBoxEl) {
+    offlineBoxEl.innerHTML = offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  }
 }
 
 /* INCIDENT TABLE */
@@ -1284,6 +1340,10 @@ function renderIncidentMarkers(list){
   if (!Array.isArray(list)) return;
 
   list.forEach(i => {
+    const activeStatuses = ["NEW","ASSIGNED","ACCEPTED","ARRIVED"];
+    const isSelected = selectedIncidentId && i.id === selectedIncidentId;
+    if (!activeStatuses.includes(i.status) && !isSelected) return;
+
     if (i.lat == null || i.lng == null) return;
 
     var lat = parseFloat(i.lat);
@@ -1299,7 +1359,7 @@ function renderIncidentMarkers(list){
       "Status: " + statusUz(i.status)
     );
 
-    if (selectedIncidentId && i.id === selectedIncidentId) {
+    if (isSelected) {
       marker.openPopup();
     }
   });
@@ -1343,10 +1403,30 @@ function renderArrivalStats(list){
 /* TOGGLE */
 function toggle(id){
   var el = document.getElementById(id);
+  if (!el) return;
   el.classList.toggle("open");
 }
-document.getElementById("toggleOnline").onclick = function(){ toggle("onlineBox"); };
-document.getElementById("toggleOffline").onclick = function(){ toggle("offlineBox"); };
+
+function toggleDataPanel(id){
+  const panel = document.getElementById(id);
+  if (!panel) return;
+  panel.classList.toggle("open");
+}
+
+const toggleOnlineBtn = document.getElementById("toggleOnline");
+const toggleOfflineBtn = document.getElementById("toggleOffline");
+const incidentsPanelToggle = document.getElementById("incidentsPanelToggle");
+const arrivalsPanelToggle = document.getElementById("arrivalsPanelToggle");
+if (toggleOnlineBtn) toggleOnlineBtn.onclick = function(){ toggle("onlineBox"); };
+if (toggleOfflineBtn) toggleOfflineBtn.onclick = function(){ toggle("offlineBox"); };
+if (incidentsPanelToggle) incidentsPanelToggle.onclick = function(e){
+  if (e.target && e.target.closest("a")) return;
+  toggleDataPanel("incidentsPanel");
+};
+if (arrivalsPanelToggle) arrivalsPanelToggle.onclick = function(e){
+  if (e.target && e.target.closest("a")) return;
+  toggleDataPanel("arrivalsPanel");
+};
 
 /* LOADERS */
 function loadOfficers(){
@@ -1356,12 +1436,19 @@ function loadOfficers(){
   return fetch("/api/admin/officers/")
     .then(r => { if(!r.ok) throw new Error("officers api: " + r.status); return r.json(); })
     .then(list => {
-      officersCache = list || [];
+      officersCache = Array.isArray(list) ? list : [];
       renderOfficerPanels(officersCache);
       renderOfficers(officersCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log(err))
+    .catch(err => {
+      console.log(err);
+      officersCache = [];
+      renderOfficerPanels([]);
+      renderOfficers([]);
+      updateDashboardTicker();
+      setMiniAlert("⚠️ Hodimlar ma’lumoti yuklanmadi. Tarmoq yoki ruxsatni tekshiring.");
+    })
     .finally(() => { __officersInFlight = false; });
 }
 
@@ -1372,13 +1459,23 @@ function loadIncidents(){
   return fetch("/api/incidents/")
     .then(r => { if(!r.ok) throw new Error("incidents api: " + r.status); return r.json(); })
     .then(list => {
-      incidentsCache = list || [];
+      incidentsCache = Array.isArray(list) ? list : [];
       renderIncidentsTable(incidentsCache);
       renderArrivalStats(incidentsCache);
       renderIncidentMarkers(incidentsCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log("incidents error", err))
+    .catch(err => {
+      console.log("incidents error", err);
+      incidentsCache = [];
+      renderIncidentsTable([]);
+      renderArrivalStats([]);
+      renderIncidentMarkers([]);
+      updateDashboardTicker();
+      const tb = document.getElementById("incTable");
+      if (tb) tb.innerHTML = '<tr><td colspan="7" class="muted">⚠️ Murojaatlar yuklanmadi. Sahifani yangilang yoki qayta login qiling.</td></tr>';
+      setMiniAlert("⚠️ Murojaatlar ma’lumoti yuklanmadi. Login sessiyasi yoki API holatini tekshiring.");
+    })
     .finally(() => { __incidentsInFlight = false; });
 }
 
@@ -1435,8 +1532,10 @@ map.on('click', function(e){
   setMiniAlert(`Yangi nuqta tanlandi: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`);
 });
 
-document.getElementById("searchBtn").onclick = function(){
-  var q = document.getElementById("searchBox").value.trim();
+const searchBtn = document.getElementById("searchBtn");
+if (searchBtn) searchBtn.onclick = function(){
+  const searchBox = document.getElementById("searchBox");
+  var q = searchBox ? searchBox.value.trim() : "";
   if (!q){
     alert("Manzil kiriting");
     return;
@@ -1516,7 +1615,8 @@ document.getElementById("searchBtn").onclick = function(){
   trySearch(0);
 };
 
-document.getElementById("refreshBtn").onclick = function(){
+const refreshBtn = document.getElementById("refreshBtn");
+if (refreshBtn) refreshBtn.onclick = function(){
   loadOfficers();
   loadIncidents();
   setMiniAlert("Ma’lumotlar yangilanmoqda...");
@@ -1533,15 +1633,19 @@ function officerLabel(o){
 }
 
 function setPickedUI(){
-  document.getElementById("pickedOfficer").innerText =
-    selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
-
-  document.getElementById("pickedIncident").innerText =
-    selectedIncidentId ? ("#" + selectedIncidentId) : "—";
-
+  const pickedOfficerEl = document.getElementById("pickedOfficer");
+  const pickedIncidentEl = document.getElementById("pickedIncident");
   const btn = document.getElementById("assignBtn");
   const ok = !!selectedOfficerId && !!selectedIncidentId;
-  btn.disabled = !ok;
+
+  if (pickedOfficerEl) {
+    pickedOfficerEl.innerText =
+      selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
+  }
+  if (pickedIncidentEl) {
+    pickedIncidentEl.innerText = selectedIncidentId ? ("#" + selectedIncidentId) : "—";
+  }
+  if (btn) btn.disabled = !ok;
 }
 
 window.focusOfficer = function(officerId){
@@ -1583,9 +1687,12 @@ function renderOfficerSearchResults(items){
 }
 
 function handleOfficerSearch(){
-  const q = norm(document.getElementById("officerSearch").value);
+  const searchEl = document.getElementById("officerSearch");
+  if (!searchEl) return;
+  const q = norm(searchEl.value);
   if (!q){
-    document.getElementById("officerSearchResults").innerHTML = "";
+    const resultsEl = document.getElementById("officerSearchResults");
+    if (resultsEl) resultsEl.innerHTML = "";
     return;
   }
 
@@ -1627,8 +1734,93 @@ async function assignSelected(){
   }
 }
 
-document.getElementById("assignBtn").onclick = assignSelected;
-document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
+async function handleIncidentSubmit(e){
+  e.preventDefault();
+  if (!selectedOfficerId){
+    alert("Avval hodim tanlang. Vizov faqat tanlangan hodimga yuboriladi.");
+    return;
+  }
+
+  const latEl = document.getElementById("lat");
+  const lngEl = document.getElementById("lng");
+  const addrEl = document.getElementById("address_text");
+  const detailsEl = document.getElementById("details");
+  const form = document.getElementById("incidentForm");
+  if (!latEl || !lngEl || !form) return;
+
+  const lat = parseFloat(latEl.value);
+  const lng = parseFloat(lngEl.value);
+  if (isNaN(lat) || isNaN(lng)){
+    alert("Xaritadan nuqta tanlang (latitude/longitude majburiy).");
+    return;
+  }
+
+  const csrftoken = getCookie("csrftoken");
+  const formData = new FormData(form);
+  const payload = {
+    latitude: lat,
+    longitude: lng,
+    address_text: addrEl ? addrEl.value : "",
+    details: detailsEl ? detailsEl.value : "",
+    victim_first_name: formData.get("victim_first_name") || "",
+    victim_last_name: formData.get("victim_last_name") || "",
+    caller_phone: formData.get("caller_phone") || "",
+    title: "Vizov"
+  };
+
+  try{
+    const createRes = await fetch("/api/create-incident/", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!createRes.ok){
+      const txt = await createRes.text();
+      alert("Vizov yaratishda xato: " + createRes.status + "\n" + txt);
+      return;
+    }
+    const created = await createRes.json();
+    const incidentId = created && created.id;
+    if (!incidentId){
+      alert("Vizov yaratildi, lekin ID qaytmadi.");
+      return;
+    }
+
+    const assignRes = await fetch(`/api/incidents/${incidentId}/assign/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify({ officer_id: selectedOfficerId })
+    });
+    if (!assignRes.ok){
+      const txt = await assignRes.text();
+      alert("Vizov yaratildi, lekin biriktirishda xato: " + assignRes.status + "\n" + txt);
+      return;
+    }
+
+    form.reset();
+    window.cancelDraftMarker();
+    setMiniAlert(`✅ Vizov #${incidentId} tanlangan hodimga yuborildi.`);
+    await loadIncidents();
+    await loadOfficers();
+  }catch(err){
+    alert("Network xato: " + (err.message || err));
+  }
+}
+
+const assignBtnEl = document.getElementById("assignBtn");
+const officerSearchEl = document.getElementById("officerSearch");
+const incidentFormEl = document.getElementById("incidentForm");
+if (assignBtnEl) assignBtnEl.onclick = assignSelected;
+if (officerSearchEl) officerSearchEl.addEventListener("input", handleOfficerSearch);
+if (incidentFormEl) incidentFormEl.addEventListener("submit", handleIncidentSubmit);
 
 /* START */
 setPickedUI();

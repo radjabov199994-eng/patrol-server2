@@ -1382,7 +1382,14 @@ function loadOfficers(){
       renderOfficers(officersCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log(err))
+    .catch(err => {
+      console.log(err);
+      officersCache = [];
+      renderOfficerPanels([]);
+      renderOfficers([]);
+      updateDashboardTicker();
+      setMiniAlert("⚠️ Hodimlar ma’lumoti yuklanmadi. Tarmoq yoki ruxsatni tekshiring.");
+    })
     .finally(() => { __officersInFlight = false; });
 }
 
@@ -1399,7 +1406,17 @@ function loadIncidents(){
       renderIncidentMarkers(incidentsCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log("incidents error", err))
+    .catch(err => {
+      console.log("incidents error", err);
+      incidentsCache = [];
+      renderIncidentsTable([]);
+      renderArrivalStats([]);
+      renderIncidentMarkers([]);
+      updateDashboardTicker();
+      const tb = document.getElementById("incTable");
+      if (tb) tb.innerHTML = '<tr><td colspan="7" class="muted">⚠️ Murojaatlar yuklanmadi. Sahifani yangilang yoki qayta login qiling.</td></tr>';
+      setMiniAlert("⚠️ Murojaatlar ma’lumoti yuklanmadi. Login sessiyasi yoki API holatini tekshiring.");
+    })
     .finally(() => { __incidentsInFlight = false; });
 }
 

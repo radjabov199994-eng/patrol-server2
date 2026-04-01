@@ -150,6 +150,36 @@
     gap:14px;
     min-width:0;
   }
+  .sidebar-switcher{
+    display:flex;
+    gap:8px;
+    padding:8px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:linear-gradient(180deg, rgba(8,14,28,.88), rgba(5,10,20,.86));
+  }
+  .sidebar-tab{
+    flex:1 1 50%;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.03);
+    color:#dbe8ff;
+    border-radius:12px;
+    padding:10px 12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+  }
+  .sidebar-tab.active{
+    border-color:rgba(96,165,250,.46);
+    background:linear-gradient(180deg, rgba(59,130,246,.22), rgba(59,130,246,.09));
+    box-shadow:0 8px 22px rgba(30,64,175,.22);
+  }
+  .sidebar-collapsible{
+    display:none;
+  }
+  .sidebar-collapsible.open{
+    display:block;
+  }
 
   .content{
     display:flex;
@@ -621,7 +651,12 @@
   <div class="layout">
     <div class="sidebar">
 
-      <div class="panel shadow-sm">
+      <div class="sidebar-switcher">
+        <button id="officerTabBtn" class="sidebar-tab active" type="button">👮 Hodim tanlash</button>
+        <button id="incidentTabBtn" class="sidebar-tab" type="button">🚨 Vizov yuborish</button>
+      </div>
+
+      <div id="officerPanel" class="panel shadow-sm sidebar-collapsible open">
         <div class="panel-head">
           <h3 class="panel-title">Hodimlar boshqaruvi</h3>
           <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
@@ -659,7 +694,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div id="incidentPanel" class="panel sidebar-collapsible">
         <div class="panel-head">
           <h3 class="panel-title">Yangi murojaat yaratish</h3>
           <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
@@ -1632,7 +1667,34 @@ async function assignSelected(){
 document.getElementById("assignBtn").onclick = assignSelected;
 document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
 
+function openSidebarPanel(panel){
+  const officerBtn = document.getElementById("officerTabBtn");
+  const incidentBtn = document.getElementById("incidentTabBtn");
+  const officerPanel = document.getElementById("officerPanel");
+  const incidentPanel = document.getElementById("incidentPanel");
+
+  if (panel === "incident"){
+    incidentPanel.classList.add("open");
+    officerPanel.classList.remove("open");
+    incidentBtn.classList.add("active");
+    officerBtn.classList.remove("active");
+  } else {
+    officerPanel.classList.add("open");
+    incidentPanel.classList.remove("open");
+    officerBtn.classList.add("active");
+    incidentBtn.classList.remove("active");
+  }
+}
+
+document.getElementById("officerTabBtn").addEventListener("click", function(){
+  openSidebarPanel("officer");
+});
+document.getElementById("incidentTabBtn").addEventListener("click", function(){
+  openSidebarPanel("incident");
+});
+
 /* START */
+openSidebarPanel("officer");
 setPickedUI();
 loadOfficers();
 loadIncidents();

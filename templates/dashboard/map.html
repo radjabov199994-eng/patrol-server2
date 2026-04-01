@@ -1281,9 +1281,16 @@ function drawSelectedRoute(inc){
 
 function closeAssignModal(){
   const modal = document.getElementById("assignModal");
+<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
+  const confirmBtn = document.getElementById("assignModalConfirm");
+  if (modal) modal.classList.remove("open");
+  assignModalIncidentId = null;
+  if (confirmBtn) confirmBtn.disabled = true;
+=======
   if (modal) modal.classList.remove("open");
   assignModalIncidentId = null;
   document.getElementById("assignModalConfirm").disabled = true;
+>>>>>>> main
 }
 
 function renderAssignModalList(){
@@ -1300,8 +1307,11 @@ function renderAssignModalList(){
     const online = isOnlineByLastSeen(o,30);
     const activeCls = selectedOfficerId === o.id ? "selected" : "";
     return `<div class="list-card ${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
+<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
+=======
     const activeCls = selectedOfficerId === o.id ? "border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08);" : "";
     return `<div class="list-card" style="${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
+>>>>>>> main
       <div class="list-card-title">
         <span>${officerLabel(o)}</span>
         <span class="pill">${online ? "🟢 Online" : "⚫ Offline"}</span>
@@ -1542,10 +1552,13 @@ function renderArrivalStats(list){
 /* TOGGLE */
 function toggle(id){
   var el = document.getElementById(id);
+  if (!el) return;
   el.classList.toggle("open");
 }
-document.getElementById("toggleOnline").onclick = function(){ toggle("onlineBox"); };
-document.getElementById("toggleOffline").onclick = function(){ toggle("offlineBox"); };
+const toggleOnlineBtn = document.getElementById("toggleOnline");
+const toggleOfflineBtn = document.getElementById("toggleOffline");
+if (toggleOnlineBtn) toggleOnlineBtn.onclick = function(){ toggle("onlineBox"); };
+if (toggleOfflineBtn) toggleOfflineBtn.onclick = function(){ toggle("offlineBox"); };
 
 /* LOADERS */
 function loadOfficers(){
@@ -1634,7 +1647,8 @@ map.on('click', function(e){
   setMiniAlert(`Yangi nuqta tanlandi: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`);
 });
 
-document.getElementById("searchBtn").onclick = function(){
+const searchBtn = document.getElementById("searchBtn");
+if (searchBtn) searchBtn.onclick = function(){
   var q = document.getElementById("searchBox").value.trim();
   if (!q){
     alert("Manzil kiriting");
@@ -1715,7 +1729,8 @@ document.getElementById("searchBtn").onclick = function(){
   trySearch(0);
 };
 
-document.getElementById("refreshBtn").onclick = function(){
+const refreshBtn = document.getElementById("refreshBtn");
+if (refreshBtn) refreshBtn.onclick = function(){
   loadOfficers();
   loadIncidents();
   setMiniAlert("Ma’lumotlar yangilanmoqda...");
@@ -1732,15 +1747,19 @@ function officerLabel(o){
 }
 
 function setPickedUI(){
-  document.getElementById("pickedOfficer").innerText =
-    selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
-
-  document.getElementById("pickedIncident").innerText =
-    selectedIncidentId ? ("#" + selectedIncidentId) : "—";
-
+  const pickedOfficerEl = document.getElementById("pickedOfficer");
+  const pickedIncidentEl = document.getElementById("pickedIncident");
   const btn = document.getElementById("assignBtn");
   const ok = !!selectedOfficerId && !!selectedIncidentId;
-  btn.disabled = !ok;
+
+  if (pickedOfficerEl){
+    pickedOfficerEl.innerText =
+      selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
+  }
+  if (pickedIncidentEl){
+    pickedIncidentEl.innerText = selectedIncidentId ? ("#" + selectedIncidentId) : "—";
+  }
+  if (btn) btn.disabled = !ok;
 }
 
 window.focusOfficer = function(officerId){
@@ -1828,6 +1847,27 @@ async function assignSelected(){
   }
 }
 
+<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
+const assignBtnEl = document.getElementById("assignBtn");
+const officerSearchEl = document.getElementById("officerSearch");
+const openOfficerPanelBtn = document.getElementById("openOfficerPanel");
+const openIncidentPanelBtn = document.getElementById("openIncidentPanel");
+const assignModalCloseBtn = document.getElementById("assignModalClose");
+const assignModalConfirmBtn = document.getElementById("assignModalConfirm");
+const assignModalEl = document.getElementById("assignModal");
+
+if (assignBtnEl) assignBtnEl.onclick = assignSelected;
+if (officerSearchEl) officerSearchEl.addEventListener("input", handleOfficerSearch);
+if (openOfficerPanelBtn) openOfficerPanelBtn.onclick = function(){ openPanel("officerPanel"); };
+if (openIncidentPanelBtn) openIncidentPanelBtn.onclick = function(){ openPanel("incidentPanel"); };
+if (assignModalCloseBtn) assignModalCloseBtn.onclick = closeAssignModal;
+if (assignModalConfirmBtn) assignModalConfirmBtn.onclick = assignSelected;
+if (assignModalEl) {
+  assignModalEl.addEventListener("click", function(e){
+    if (e.target && e.target.id === "assignModal") closeAssignModal();
+  });
+}
+=======
 document.getElementById("assignBtn").onclick = assignSelected;
 document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
 document.getElementById("openOfficerPanel").onclick = function(){ openPanel("officerPanel"); };
@@ -1837,6 +1877,7 @@ document.getElementById("assignModalConfirm").onclick = assignSelected;
 document.getElementById("assignModal").addEventListener("click", function(e){
   if (e.target && e.target.id === "assignModal") closeAssignModal();
 });
+>>>>>>> main
 
 /* START */
 setPickedUI();

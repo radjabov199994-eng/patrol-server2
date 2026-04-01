@@ -1281,16 +1281,9 @@ function drawSelectedRoute(inc){
 
 function closeAssignModal(){
   const modal = document.getElementById("assignModal");
-<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
-  const confirmBtn = document.getElementById("assignModalConfirm");
-  if (modal) modal.classList.remove("open");
-  assignModalIncidentId = null;
-  if (confirmBtn) confirmBtn.disabled = true;
-=======
   if (modal) modal.classList.remove("open");
   assignModalIncidentId = null;
   document.getElementById("assignModalConfirm").disabled = true;
->>>>>>> main
 }
 
 function renderAssignModalList(){
@@ -1307,11 +1300,8 @@ function renderAssignModalList(){
     const online = isOnlineByLastSeen(o,30);
     const activeCls = selectedOfficerId === o.id ? "selected" : "";
     return `<div class="list-card ${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
-<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
-=======
     const activeCls = selectedOfficerId === o.id ? "border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08);" : "";
     return `<div class="list-card" style="${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
->>>>>>> main
       <div class="list-card-title">
         <span>${officerLabel(o)}</span>
         <span class="pill">${online ? "🟢 Online" : "⚫ Offline"}</span>
@@ -1401,11 +1391,25 @@ function renderOfficers(list) {
 }
 
 function renderOfficerPanels(list){
+  if (!Array.isArray(list)) {
+    const onlineCountEl = document.getElementById("onlineCount");
+    const offlineCountEl = document.getElementById("offlineCount");
+    const onlineBoxEl = document.getElementById("onlineBox");
+    const offlineBoxEl = document.getElementById("offlineBox");
+    if (onlineCountEl) onlineCountEl.innerText = "0";
+    if (offlineCountEl) offlineCountEl.innerText = "0";
+    if (onlineBoxEl) onlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    if (offlineBoxEl) offlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    return;
+  }
+
   var online = list.filter(o => isOnlineByLastSeen(o, 30));
   var offline = list.filter(o => !isOnlineByLastSeen(o, 30));
 
-  document.getElementById("onlineCount").innerText = online.length;
-  document.getElementById("offlineCount").innerText = offline.length;
+  const onlineCountEl = document.getElementById("onlineCount");
+  const offlineCountEl = document.getElementById("offlineCount");
+  if (onlineCountEl) onlineCountEl.innerText = online.length;
+  if (offlineCountEl) offlineCountEl.innerText = offline.length;
 
   function row(o){
     var onlineNow = isOnlineByLastSeen(o, 30);
@@ -1421,11 +1425,15 @@ function renderOfficerPanels(list){
     );
   }
 
-  document.getElementById("onlineBox").innerHTML =
-    online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  const onlineBoxEl = document.getElementById("onlineBox");
+  const offlineBoxEl = document.getElementById("offlineBox");
 
-  document.getElementById("offlineBox").innerHTML =
-    offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  if (onlineBoxEl) {
+    onlineBoxEl.innerHTML = online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  }
+  if (offlineBoxEl) {
+    offlineBoxEl.innerHTML = offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  }
 }
 
 /* INCIDENT TABLE */
@@ -1568,12 +1576,19 @@ function loadOfficers(){
   return fetch("/api/admin/officers/")
     .then(r => { if(!r.ok) throw new Error("officers api: " + r.status); return r.json(); })
     .then(list => {
-      officersCache = list || [];
+      officersCache = Array.isArray(list) ? list : [];
       renderOfficerPanels(officersCache);
       renderOfficers(officersCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log(err))
+    .catch(err => {
+      console.log(err);
+      officersCache = [];
+      renderOfficerPanels([]);
+      renderOfficers([]);
+      updateDashboardTicker();
+      setMiniAlert("⚠️ Hodimlar ma’lumoti yuklanmadi. Tarmoq yoki ruxsatni tekshiring.");
+    })
     .finally(() => { __officersInFlight = false; });
 }
 
@@ -1584,13 +1599,23 @@ function loadIncidents(){
   return fetch("/api/incidents/")
     .then(r => { if(!r.ok) throw new Error("incidents api: " + r.status); return r.json(); })
     .then(list => {
-      incidentsCache = list || [];
+      incidentsCache = Array.isArray(list) ? list : [];
       renderIncidentsTable(incidentsCache);
       renderArrivalStats(incidentsCache);
       renderIncidentMarkers(incidentsCache);
       updateDashboardTicker();
     })
-    .catch(err => console.log("incidents error", err))
+    .catch(err => {
+      console.log("incidents error", err);
+      incidentsCache = [];
+      renderIncidentsTable([]);
+      renderArrivalStats([]);
+      renderIncidentMarkers([]);
+      updateDashboardTicker();
+      const tb = document.getElementById("incTable");
+      if (tb) tb.innerHTML = '<tr><td colspan="7" class="muted">⚠️ Murojaatlar yuklanmadi. Sahifani yangilang yoki qayta login qiling.</td></tr>';
+      setMiniAlert("⚠️ Murojaatlar ma’lumoti yuklanmadi. Login sessiyasi yoki API holatini tekshiring.");
+    })
     .finally(() => { __incidentsInFlight = false; });
 }
 
@@ -1801,9 +1826,12 @@ function renderOfficerSearchResults(items){
 }
 
 function handleOfficerSearch(){
-  const q = norm(document.getElementById("officerSearch").value);
+  const searchEl = document.getElementById("officerSearch");
+  if (!searchEl) return;
+  const q = norm(searchEl.value);
   if (!q){
-    document.getElementById("officerSearchResults").innerHTML = "";
+    const resultsEl = document.getElementById("officerSearchResults");
+    if (resultsEl) resultsEl.innerHTML = "";
     return;
   }
 
@@ -1847,27 +1875,6 @@ async function assignSelected(){
   }
 }
 
-<<<<<<< codex/check-repo-structure-and-find-templates-lslsja
-const assignBtnEl = document.getElementById("assignBtn");
-const officerSearchEl = document.getElementById("officerSearch");
-const openOfficerPanelBtn = document.getElementById("openOfficerPanel");
-const openIncidentPanelBtn = document.getElementById("openIncidentPanel");
-const assignModalCloseBtn = document.getElementById("assignModalClose");
-const assignModalConfirmBtn = document.getElementById("assignModalConfirm");
-const assignModalEl = document.getElementById("assignModal");
-
-if (assignBtnEl) assignBtnEl.onclick = assignSelected;
-if (officerSearchEl) officerSearchEl.addEventListener("input", handleOfficerSearch);
-if (openOfficerPanelBtn) openOfficerPanelBtn.onclick = function(){ openPanel("officerPanel"); };
-if (openIncidentPanelBtn) openIncidentPanelBtn.onclick = function(){ openPanel("incidentPanel"); };
-if (assignModalCloseBtn) assignModalCloseBtn.onclick = closeAssignModal;
-if (assignModalConfirmBtn) assignModalConfirmBtn.onclick = assignSelected;
-if (assignModalEl) {
-  assignModalEl.addEventListener("click", function(e){
-    if (e.target && e.target.id === "assignModal") closeAssignModal();
-  });
-}
-=======
 document.getElementById("assignBtn").onclick = assignSelected;
 document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
 document.getElementById("openOfficerPanel").onclick = function(){ openPanel("officerPanel"); };
@@ -1877,7 +1884,6 @@ document.getElementById("assignModalConfirm").onclick = assignSelected;
 document.getElementById("assignModal").addEventListener("click", function(e){
   if (e.target && e.target.id === "assignModal") closeAssignModal();
 });
->>>>>>> main
 
 /* START */
 setPickedUI();

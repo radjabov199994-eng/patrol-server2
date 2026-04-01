@@ -7,16 +7,16 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
   :root{
-    --bg:#07111f;
-    --bg2:#0b1730;
-    --card:rgba(13,24,47,.88);
-    --card-2:rgba(12,21,40,.94);
+    --bg:#040814;
+    --bg2:#0a1531;
+    --card:rgba(15,27,52,.86);
+    --card-2:rgba(10,20,40,.94);
     --line:rgba(255,255,255,.08);
     --line-2:rgba(96,165,250,.18);
     --text:#ecf3ff;
     --muted:#94a3b8;
-    --blue:#3b82f6;
-    --blue2:#60a5fa;
+    --blue:#3f8cff;
+    --blue2:#7ab8ff;
     --green:#22c55e;
     --yellow:#f59e0b;
     --red:#ef4444;
@@ -33,9 +33,10 @@
     font-family:Arial, sans-serif;
     color:var(--text);
     background:
-      radial-gradient(circle at top right, rgba(59,130,246,.18), transparent 25%),
-      radial-gradient(circle at top left, rgba(34,197,94,.10), transparent 20%),
-      linear-gradient(180deg, #06101d, #0a1324 45%, #091426 100%);
+      radial-gradient(circle at 8% 12%, rgba(56,189,248,.17), transparent 30%),
+      radial-gradient(circle at 90% 8%, rgba(99,102,241,.22), transparent 35%),
+      radial-gradient(circle at 50% 100%, rgba(34,197,94,.12), transparent 45%),
+      linear-gradient(180deg, #030711, #081227 40%, #0a1630 100%);
   }
 
   a{color:inherit;text-decoration:none}
@@ -157,11 +158,18 @@
   }
 
   .action-card{
-    border:1px solid rgba(96,165,250,.2);
+    border:1px solid rgba(122,184,255,.25);
     border-radius:16px;
     padding:14px;
-    background:linear-gradient(165deg, rgba(29,78,216,.2), rgba(15,23,42,.86));
-    box-shadow:0 10px 20px rgba(0,0,0,.25);
+    background:linear-gradient(155deg, rgba(59,130,246,.28), rgba(15,23,42,.88));
+    box-shadow:0 14px 28px rgba(4,8,20,.45), inset 0 1px 0 rgba(255,255,255,.08);
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  }
+
+  .action-card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(125,211,252,.48);
+    box-shadow:0 22px 34px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.1);
   }
 
   .action-card h4{
@@ -196,14 +204,20 @@
     max-height:0;
     opacity:0;
     overflow:hidden;
-    transition:max-height .35s ease, opacity .35s ease;
+    transform:translateY(-10px) scale(.985);
+    filter:blur(2px);
+    transition:max-height .45s cubic-bezier(.22,.61,.36,1), opacity .35s ease, transform .45s cubic-bezier(.22,.61,.36,1), filter .35s ease;
     border-color:transparent;
+    pointer-events:none;
   }
 
   .panel.collapsible.open{
     max-height:1600px;
     opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
     border-color:rgba(255,255,255,.07);
+    pointer-events:auto;
   }
 
   .panel-head{
@@ -272,6 +286,10 @@
   .btn:hover{
     transform:translateY(-1px);
     filter:brightness(1.04);
+  }
+
+  .btn:active{
+    transform:translateY(1px) scale(.99);
   }
 
   .btn:disabled{
@@ -356,16 +374,25 @@
 
   .list-card{
     border:1px solid rgba(255,255,255,.07);
-    background:rgba(255,255,255,.028);
+    background:linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
     border-radius:16px;
     padding:12px;
     margin-bottom:8px;
     cursor:pointer;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
   }
 
   .list-card:hover{
-    border-color:rgba(96,165,250,.3);
-    background:rgba(255,255,255,.05);
+    border-color:rgba(125,211,252,.42);
+    background:linear-gradient(150deg, rgba(59,130,246,.16), rgba(255,255,255,.04));
+    transform:translateY(-2px);
+    box-shadow:0 12px 24px rgba(7,12,28,.35);
+  }
+
+  .list-card.selected{
+    border-color:rgba(34,197,94,.55);
+    background:linear-gradient(150deg, rgba(34,197,94,.16), rgba(255,255,255,.04));
+    box-shadow:0 12px 24px rgba(4,40,24,.35);
   }
 
   .list-card-title{
@@ -469,12 +496,13 @@
     width:100%;
     height:720px;
     border-radius:20px;
-    border:1px solid rgba(96,165,250,.10);
+    border:1px solid rgba(125,211,252,.2);
     overflow:hidden;
-    background:#05070d;
+    background:#02050d;
     box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.02),
-      0 18px 40px rgba(0,0,0,.35);
+      inset 0 0 0 1px rgba(255,255,255,.05),
+      inset 0 30px 60px rgba(59,130,246,.06),
+      0 20px 48px rgba(0,0,0,.45);
   }
 
   .map-mini-alert{
@@ -1027,7 +1055,7 @@ var map = L.map('map', {
 }).setView([39.6542, 66.9597], 13);
 
 L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   {
     subdomains: 'abcd',
     maxZoom: 20,
@@ -1072,8 +1100,12 @@ let __incidentsInFlight = false;
 function openPanel(panelId){
   const officerPanel = document.getElementById("officerPanel");
   const incidentPanel = document.getElementById("incidentPanel");
-  if (officerPanel) officerPanel.classList.toggle("open", panelId === "officerPanel");
-  if (incidentPanel) incidentPanel.classList.toggle("open", panelId === "incidentPanel");
+  const target = panelId === "officerPanel" ? officerPanel : incidentPanel;
+  if (!target) return;
+  const shouldClose = target.classList.contains("open");
+  if (officerPanel) officerPanel.classList.remove("open");
+  if (incidentPanel) incidentPanel.classList.remove("open");
+  if (!shouldClose) target.classList.add("open");
 }
 
 /* ICON CACHE */
@@ -1266,6 +1298,8 @@ function renderAssignModalList(){
 
   box.innerHTML = sorted.map(o => {
     const online = isOnlineByLastSeen(o,30);
+    const activeCls = selectedOfficerId === o.id ? "selected" : "";
+    return `<div class="list-card ${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
     const activeCls = selectedOfficerId === o.id ? "border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08);" : "";
     return `<div class="list-card" style="${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
       <div class="list-card-title">

@@ -7,16 +7,16 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
   :root{
-    --bg:#07111f;
-    --bg2:#0b1730;
-    --card:rgba(13,24,47,.88);
-    --card-2:rgba(12,21,40,.94);
+    --bg:#040814;
+    --bg2:#0a1531;
+    --card:rgba(15,27,52,.86);
+    --card-2:rgba(10,20,40,.94);
     --line:rgba(255,255,255,.08);
     --line-2:rgba(96,165,250,.18);
     --text:#ecf3ff;
     --muted:#94a3b8;
-    --blue:#3b82f6;
-    --blue2:#60a5fa;
+    --blue:#3f8cff;
+    --blue2:#7ab8ff;
     --green:#22c55e;
     --yellow:#f59e0b;
     --red:#ef4444;
@@ -33,9 +33,10 @@
     font-family:Arial, sans-serif;
     color:var(--text);
     background:
-      radial-gradient(circle at top right, rgba(59,130,246,.18), transparent 25%),
-      radial-gradient(circle at top left, rgba(34,197,94,.10), transparent 20%),
-      linear-gradient(180deg, #06101d, #0a1324 45%, #091426 100%);
+      radial-gradient(circle at 8% 12%, rgba(56,189,248,.17), transparent 30%),
+      radial-gradient(circle at 90% 8%, rgba(99,102,241,.22), transparent 35%),
+      radial-gradient(circle at 50% 100%, rgba(34,197,94,.12), transparent 45%),
+      linear-gradient(180deg, #030711, #081227 40%, #0a1630 100%);
   }
 
   a{color:inherit;text-decoration:none}
@@ -150,6 +151,39 @@
     min-width:0;
   }
 
+  .quick-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .action-card{
+    border:1px solid rgba(122,184,255,.25);
+    border-radius:16px;
+    padding:14px;
+    background:linear-gradient(155deg, rgba(59,130,246,.28), rgba(15,23,42,.88));
+    box-shadow:0 14px 28px rgba(4,8,20,.45), inset 0 1px 0 rgba(255,255,255,.08);
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  }
+
+  .action-card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(125,211,252,.48);
+    box-shadow:0 22px 34px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.1);
+  }
+
+  .action-card h4{
+    margin:0 0 6px;
+    font-size:15px;
+  }
+
+  .action-card p{
+    margin:0 0 10px;
+    color:#bfd1f8;
+    font-size:12px;
+    line-height:1.4;
+  }
+
   .content{
     display:flex;
     flex-direction:column;
@@ -164,6 +198,26 @@
     box-shadow:0 14px 32px rgba(0,0,0,.28);
     overflow:hidden;
     min-width:0;
+  }
+
+  .panel.collapsible{
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transform:translateY(-10px) scale(.985);
+    filter:blur(2px);
+    transition:max-height .45s cubic-bezier(.22,.61,.36,1), opacity .35s ease, transform .45s cubic-bezier(.22,.61,.36,1), filter .35s ease;
+    border-color:transparent;
+    pointer-events:none;
+  }
+
+  .panel.collapsible.open{
+    max-height:1600px;
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+    border-color:rgba(255,255,255,.07);
+    pointer-events:auto;
   }
 
   .panel-head{
@@ -232,6 +286,10 @@
   .btn:hover{
     transform:translateY(-1px);
     filter:brightness(1.04);
+  }
+
+  .btn:active{
+    transform:translateY(1px) scale(.99);
   }
 
   .btn:disabled{
@@ -316,16 +374,25 @@
 
   .list-card{
     border:1px solid rgba(255,255,255,.07);
-    background:rgba(255,255,255,.028);
+    background:linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
     border-radius:16px;
     padding:12px;
     margin-bottom:8px;
     cursor:pointer;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
   }
 
   .list-card:hover{
-    border-color:rgba(96,165,250,.3);
-    background:rgba(255,255,255,.05);
+    border-color:rgba(125,211,252,.42);
+    background:linear-gradient(150deg, rgba(59,130,246,.16), rgba(255,255,255,.04));
+    transform:translateY(-2px);
+    box-shadow:0 12px 24px rgba(7,12,28,.35);
+  }
+
+  .list-card.selected{
+    border-color:rgba(34,197,94,.55);
+    background:linear-gradient(150deg, rgba(34,197,94,.16), rgba(255,255,255,.04));
+    box-shadow:0 12px 24px rgba(4,40,24,.35);
   }
 
   .list-card-title{
@@ -429,12 +496,13 @@
     width:100%;
     height:720px;
     border-radius:20px;
-    border:1px solid rgba(96,165,250,.10);
+    border:1px solid rgba(125,211,252,.2);
     overflow:hidden;
-    background:#05070d;
+    background:#02050d;
     box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.02),
-      0 18px 40px rgba(0,0,0,.35);
+      inset 0 0 0 1px rgba(255,255,255,.05),
+      inset 0 30px 60px rgba(59,130,246,.06),
+      0 20px 48px rgba(0,0,0,.45);
   }
 
   .map-mini-alert{
@@ -546,6 +614,42 @@
     box-shadow:0 10px 18px rgba(0,0,0,.12);
   }
 
+  .assign-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(3,7,18,.72);
+    backdrop-filter:blur(6px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    padding:14px;
+  }
+
+  .assign-modal.open{
+    display:flex;
+  }
+
+  .assign-card{
+    width:min(680px, 100%);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:20px;
+    background:linear-gradient(180deg, rgba(12,19,36,.97), rgba(9,15,27,.97));
+    box-shadow:0 30px 60px rgba(0,0,0,.42);
+    overflow:hidden;
+  }
+
+  .assign-head{
+    padding:16px 18px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+
+  .assign-body{
+    padding:14px 18px 18px;
+    max-height:56vh;
+    overflow:auto;
+  }
+
   .markerWrap{
     position:relative;
     width:100%;
@@ -643,8 +747,20 @@
 
   <div class="layout">
     <div class="sidebar">
+      <div class="quick-actions">
+        <div class="action-card">
+          <h4>📞 Vizov paneli</h4>
+          <p>Yangi murojaat yaratish formasini alohida oynada oching.</p>
+          <button id="openIncidentPanel" class="btn btn-light" type="button" style="width:100%;">Vizov yaratish</button>
+        </div>
+        <div class="action-card">
+          <h4>👮 Hodim paneli</h4>
+          <p>Hodimlarni ko‘rish va biriktirish uchun boshqaruv panelini oching.</p>
+          <button id="openOfficerPanel" class="btn btn-light" type="button" style="width:100%;">Hodimlarni ko‘rish</button>
+        </div>
+      </div>
 
-      <div class="panel">
+      <div class="panel collapsible" id="officerPanel">
         <div class="panel-head">
           <h3 class="panel-title">Hodimlar boshqaruvi</h3>
           <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
@@ -682,7 +798,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel collapsible" id="incidentPanel">
         <div class="panel-head">
           <h3 class="panel-title">Yangi murojaat yaratish</h3>
           <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
@@ -843,6 +959,23 @@
 
 </div>
 
+<div class="assign-modal" id="assignModal">
+  <div class="assign-card">
+    <div class="assign-head">
+      <h3 class="panel-title" style="font-size:20px;">Biriktirish tasdiqlash</h3>
+      <div class="panel-sub" id="assignModalText">Vizov tanlang.</div>
+    </div>
+    <div class="assign-body">
+      <label class="tiny-label">Hodimni tanlang (online ro‘yxat ustuvor)</label>
+      <div id="assignModalList"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button id="assignModalConfirm" class="btn btn-green" type="button" style="flex:1 1 180px;" disabled>Biriktirishni tasdiqlash</button>
+        <button id="assignModalClose" class="btn btn-dark" type="button" style="flex:1 1 140px;">Yopish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 function getCookie(name) {
@@ -950,7 +1083,7 @@ var map = L.map('map', {
 }).setView([39.6542, 66.9597], 13);
 
 L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   {
     subdomains: 'abcd',
     maxZoom: 20,
@@ -988,8 +1121,20 @@ var incidentsCache = [];
 var officerMarkers = {};
 var selectedOfficerId = null;
 var selectedIncidentId = null;
+var assignModalIncidentId = null;
 let __officersInFlight = false;
 let __incidentsInFlight = false;
+
+function openPanel(panelId){
+  const officerPanel = document.getElementById("officerPanel");
+  const incidentPanel = document.getElementById("incidentPanel");
+  const target = panelId === "officerPanel" ? officerPanel : incidentPanel;
+  if (!target) return;
+  const shouldClose = target.classList.contains("open");
+  if (officerPanel) officerPanel.classList.remove("open");
+  if (incidentPanel) incidentPanel.classList.remove("open");
+  if (!shouldClose) target.classList.add("open");
+}
 
 /* ICON CACHE */
 const __ICON_CACHE = new Map();
@@ -1172,6 +1317,58 @@ function drawSelectedRoute(inc){
     });
 }
 
+function closeAssignModal(){
+  const modal = document.getElementById("assignModal");
+  if (modal) modal.classList.remove("open");
+  assignModalIncidentId = null;
+  document.getElementById("assignModalConfirm").disabled = true;
+}
+
+function renderAssignModalList(){
+  const box = document.getElementById("assignModalList");
+  if (!box) return;
+  const sorted = [...(officersCache || [])].sort((a,b) => {
+    const ao = isOnlineByLastSeen(a,30) ? 1 : 0;
+    const bo = isOnlineByLastSeen(b,30) ? 1 : 0;
+    if (ao !== bo) return bo - ao;
+    return (a.username || "").localeCompare(b.username || "");
+  });
+
+  box.innerHTML = sorted.map(o => {
+    const online = isOnlineByLastSeen(o,30);
+    const activeCls = selectedOfficerId === o.id ? "selected" : "";
+    return `<div class="list-card ${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
+    const activeCls = selectedOfficerId === o.id ? "border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08);" : "";
+    return `<div class="list-card" style="${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
+      <div class="list-card-title">
+        <span>${officerLabel(o)}</span>
+        <span class="pill">${online ? "🟢 Online" : "⚫ Offline"}</span>
+      </div>
+      <div class="muted" style="margin-top:8px;">${o.position || "Lavozim yo‘q"} • ${o.phone || "Tel yo‘q"}</div>
+    </div>`;
+  }).join("") || '<div class="muted">Hodim topilmadi</div>';
+}
+
+window.onAssignOfficerPick = function(officerId){
+  selectedOfficerId = officerId;
+  setPickedUI();
+  renderAssignModalList();
+  document.getElementById("assignModalConfirm").disabled = !(assignModalIncidentId && selectedOfficerId);
+};
+
+function openAssignModal(incident){
+  assignModalIncidentId = incident.id;
+  selectedIncidentId = incident.id;
+  setPickedUI();
+  const text = document.getElementById("assignModalText");
+  if (text){
+    text.innerHTML = `Vizov <b>#${incident.id}</b> tanlandi. Qaysi hodimga biriktirasiz?`;
+  }
+  renderAssignModalList();
+  document.getElementById("assignModalConfirm").disabled = !(assignModalIncidentId && selectedOfficerId);
+  document.getElementById("assignModal").classList.add("open");
+}
+
 window.focusIncident = function(incidentId){
   selectedIncidentId = incidentId;
   setPickedUI();
@@ -1186,6 +1383,8 @@ window.focusIncident = function(incidentId){
 
   if (!inc.assigned_officer){
     setMiniAlert(`Vizov <b>#${inc.id}</b> tanlandi. Hali hodim biriktirilmagan.`);
+    openAssignModal(inc);
+    openPanel("officerPanel");
     return;
   }
 
@@ -1406,27 +1605,10 @@ function toggle(id){
   if (!el) return;
   el.classList.toggle("open");
 }
-
-function toggleDataPanel(id){
-  const panel = document.getElementById(id);
-  if (!panel) return;
-  panel.classList.toggle("open");
-}
-
 const toggleOnlineBtn = document.getElementById("toggleOnline");
 const toggleOfflineBtn = document.getElementById("toggleOffline");
-const incidentsPanelToggle = document.getElementById("incidentsPanelToggle");
-const arrivalsPanelToggle = document.getElementById("arrivalsPanelToggle");
 if (toggleOnlineBtn) toggleOnlineBtn.onclick = function(){ toggle("onlineBox"); };
 if (toggleOfflineBtn) toggleOfflineBtn.onclick = function(){ toggle("offlineBox"); };
-if (incidentsPanelToggle) incidentsPanelToggle.onclick = function(e){
-  if (e.target && e.target.closest("a")) return;
-  toggleDataPanel("incidentsPanel");
-};
-if (arrivalsPanelToggle) arrivalsPanelToggle.onclick = function(e){
-  if (e.target && e.target.closest("a")) return;
-  toggleDataPanel("arrivalsPanel");
-};
 
 /* LOADERS */
 function loadOfficers(){
@@ -1534,8 +1716,7 @@ map.on('click', function(e){
 
 const searchBtn = document.getElementById("searchBtn");
 if (searchBtn) searchBtn.onclick = function(){
-  const searchBox = document.getElementById("searchBox");
-  var q = searchBox ? searchBox.value.trim() : "";
+  var q = document.getElementById("searchBox").value.trim();
   if (!q){
     alert("Manzil kiriting");
     return;
@@ -1638,11 +1819,11 @@ function setPickedUI(){
   const btn = document.getElementById("assignBtn");
   const ok = !!selectedOfficerId && !!selectedIncidentId;
 
-  if (pickedOfficerEl) {
+  if (pickedOfficerEl){
     pickedOfficerEl.innerText =
       selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
   }
-  if (pickedIncidentEl) {
+  if (pickedIncidentEl){
     pickedIncidentEl.innerText = selectedIncidentId ? ("#" + selectedIncidentId) : "—";
   }
   if (btn) btn.disabled = !ok;
@@ -1705,12 +1886,13 @@ function handleOfficerSearch(){
 }
 
 async function assignSelected(){
-  if (!selectedIncidentId || !selectedOfficerId) return;
+  const incidentForAssign = assignModalIncidentId || selectedIncidentId;
+  if (!incidentForAssign || !selectedOfficerId) return;
 
   const csrftoken = getCookie("csrftoken");
 
   try{
-    const r = await fetch(`/api/incidents/${selectedIncidentId}/assign/`, {
+    const r = await fetch(`/api/incidents/${incidentForAssign}/assign/`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -1727,103 +1909,27 @@ async function assignSelected(){
     }
 
     await loadIncidents();
-    setMiniAlert(`Vizov <b>#${selectedIncidentId}</b> hodimga muvaffaqiyatli biriktirildi.`);
+    setMiniAlert(`Vizov <b>#${incidentForAssign}</b> hodimga muvaffaqiyatli biriktirildi.`);
+    closeAssignModal();
     alert("✅ Biriktirildi");
   }catch(e){
     alert("Network xato: " + (e.message || e));
   }
 }
 
-async function handleIncidentSubmit(e){
-  e.preventDefault();
-  if (!selectedOfficerId){
-    alert("Avval hodim tanlang. Vizov faqat tanlangan hodimga yuboriladi.");
-    return;
-  }
-
-  const latEl = document.getElementById("lat");
-  const lngEl = document.getElementById("lng");
-  const addrEl = document.getElementById("address_text");
-  const detailsEl = document.getElementById("details");
-  const form = document.getElementById("incidentForm");
-  if (!latEl || !lngEl || !form) return;
-
-  const lat = parseFloat(latEl.value);
-  const lng = parseFloat(lngEl.value);
-  if (isNaN(lat) || isNaN(lng)){
-    alert("Xaritadan nuqta tanlang (latitude/longitude majburiy).");
-    return;
-  }
-
-  const csrftoken = getCookie("csrftoken");
-  const formData = new FormData(form);
-  const payload = {
-    latitude: lat,
-    longitude: lng,
-    address_text: addrEl ? addrEl.value : "",
-    details: detailsEl ? detailsEl.value : "",
-    victim_first_name: formData.get("victim_first_name") || "",
-    victim_last_name: formData.get("victim_last_name") || "",
-    caller_phone: formData.get("caller_phone") || "",
-    title: "Vizov"
-  };
-
-  try{
-    const createRes = await fetch("/api/create-incident/", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken
-      },
-      body: JSON.stringify(payload)
-    });
-    if (!createRes.ok){
-      const txt = await createRes.text();
-      alert("Vizov yaratishda xato: " + createRes.status + "\n" + txt);
-      return;
-    }
-    const created = await createRes.json();
-    const incidentId = created && created.id;
-    if (!incidentId){
-      alert("Vizov yaratildi, lekin ID qaytmadi.");
-      return;
-    }
-
-    const assignRes = await fetch(`/api/incidents/${incidentId}/assign/`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken
-      },
-      body: JSON.stringify({ officer_id: selectedOfficerId })
-    });
-    if (!assignRes.ok){
-      const txt = await assignRes.text();
-      alert("Vizov yaratildi, lekin biriktirishda xato: " + assignRes.status + "\n" + txt);
-      return;
-    }
-
-    form.reset();
-    window.cancelDraftMarker();
-    setMiniAlert(`✅ Vizov #${incidentId} tanlangan hodimga yuborildi.`);
-    await loadIncidents();
-    await loadOfficers();
-  }catch(err){
-    alert("Network xato: " + (err.message || err));
-  }
-}
-
-const assignBtnEl = document.getElementById("assignBtn");
-const officerSearchEl = document.getElementById("officerSearch");
-const incidentFormEl = document.getElementById("incidentForm");
-if (assignBtnEl) assignBtnEl.onclick = assignSelected;
-if (officerSearchEl) officerSearchEl.addEventListener("input", handleOfficerSearch);
-if (incidentFormEl) incidentFormEl.addEventListener("submit", handleIncidentSubmit);
+document.getElementById("assignBtn").onclick = assignSelected;
+document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
+document.getElementById("openOfficerPanel").onclick = function(){ openPanel("officerPanel"); };
+document.getElementById("openIncidentPanel").onclick = function(){ openPanel("incidentPanel"); };
+document.getElementById("assignModalClose").onclick = closeAssignModal;
+document.getElementById("assignModalConfirm").onclick = assignSelected;
+document.getElementById("assignModal").addEventListener("click", function(e){
+  if (e.target && e.target.id === "assignModal") closeAssignModal();
+});
 
 /* START */
 setPickedUI();
+openPanel("incidentPanel");
 loadOfficers();
 loadIncidents();
 updateDashboardTicker();

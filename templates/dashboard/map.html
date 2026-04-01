@@ -37,6 +37,7 @@
       radial-gradient(circle at 90% 8%, rgba(99,102,241,.22), transparent 35%),
       radial-gradient(circle at 50% 100%, rgba(34,197,94,.12), transparent 45%),
       linear-gradient(180deg, #030711, #081227 40%, #0a1630 100%);
+    overflow:hidden;
   }
 
   a{color:inherit;text-decoration:none}
@@ -45,6 +46,10 @@
 
   .page{
     padding:14px;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
   }
 
   .header{
@@ -52,7 +57,6 @@
     grid-template-columns:auto 1fr auto;
     align-items:center;
     gap:12px;
-    margin-bottom:14px;
     padding:14px 18px;
     border:1px solid var(--line);
     border-radius:20px;
@@ -138,10 +142,9 @@
   }
 
   .layout{
-    display:grid;
-    grid-template-columns:340px 1fr;
-    gap:14px;
-    align-items:start;
+    position:relative;
+    flex:1;
+    min-height:0;
   }
 
   .sidebar{
@@ -149,6 +152,12 @@
     flex-direction:column;
     gap:14px;
     min-width:0;
+    position:absolute;
+    top:16px;
+    left:16px;
+    width:min(360px, calc(100% - 32px));
+    z-index:900;
+    pointer-events:none;
   }
 
   .quick-actions{
@@ -185,9 +194,9 @@
   }
 
   .content{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
+    position:relative;
+    width:100%;
+    height:100%;
     min-width:0;
   }
 
@@ -422,7 +431,12 @@
 
   .map-shell{
     position:relative;
-    padding:16px;
+    height:100%;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:20px;
+    background:rgba(10,18,34,.82);
+    box-shadow:0 14px 32px rgba(0,0,0,.28);
+    overflow:hidden;
   }
 
   .map-topbar{
@@ -431,7 +445,13 @@
     justify-content:space-between;
     gap:12px;
     flex-wrap:wrap;
-    margin-bottom:12px;
+    position:absolute;
+    top:16px;
+    left:16px;
+    right:16px;
+    z-index:700;
+    margin-bottom:0;
+    pointer-events:none;
   }
 
   .map-title{
@@ -445,6 +465,7 @@
     gap:10px;
     flex-wrap:wrap;
     align-items:center;
+    pointer-events:auto;
   }
 
   .toolbar .inp{
@@ -494,7 +515,8 @@
 
   #map{
     width:100%;
-    height:720px;
+    height:calc(100vh - 138px);
+    min-height:520px;
     border-radius:20px;
     border:1px solid rgba(125,211,252,.2);
     overflow:hidden;
@@ -506,7 +528,12 @@
   }
 
   .map-mini-alert{
-    margin-top:12px;
+    position:absolute;
+    left:16px;
+    right:16px;
+    bottom:16px;
+    z-index:650;
+    margin-top:0;
     border:1px solid rgba(59,130,246,.12);
     background:rgba(10,18,34,.88);
     border-radius:14px;
@@ -517,13 +544,27 @@
   }
 
   .bottom-grid{
+    position:absolute;
+    left:16px;
+    right:16px;
+    bottom:70px;
     display:grid;
     grid-template-columns:1fr;
-    gap:14px;
+    gap:10px;
+    z-index:850;
+    pointer-events:none;
+  }
+
+  .sidebar .action-card,
+  .sidebar .panel,
+  .bottom-grid .panel{
+    pointer-events:auto;
   }
 
   .panel-collapsible .panel-body{
     display:none;
+    max-height:42vh;
+    overflow:auto;
   }
 
   .panel-collapsible.open .panel-body{
@@ -687,7 +728,36 @@
   }
 
   @media (max-width:1280px){
-    .layout{ grid-template-columns:1fr; }
+    .sidebar{
+      left:10px;
+      right:10px;
+      top:10px;
+      width:auto;
+    }
+    .quick-actions{
+      grid-template-columns:1fr;
+    }
+    .panel.collapsible{
+      position:fixed;
+      left:10px;
+      right:10px;
+      top:86px;
+      bottom:10px;
+      z-index:1100;
+      max-height:none;
+    }
+    .panel.collapsible .panel-body{
+      max-height:calc(100vh - 190px);
+      overflow:auto;
+    }
+    .bottom-grid{
+      left:10px;
+      right:10px;
+      bottom:10px;
+    }
+    .bottom-grid .panel{
+      border-radius:16px;
+    }
     .toolbar .inp{ min-width:180px; width:100%; }
     .header{ grid-template-columns:1fr; }
     .dashboardTicker{ max-width:100%; margin:0; }
@@ -699,7 +769,16 @@
       padding:12px;
       grid-template-columns:1fr;
     }
-    .panel-head, .panel-body, .map-shell{ padding:14px; }
+    .panel-head, .panel-body{ padding:14px; }
+    .map-topbar{
+      left:10px;
+      right:10px;
+      top:10px;
+      gap:8px;
+    }
+    .map-topbar > div:first-child{
+      display:none;
+    }
     .dashboardTicker{
       max-width:100%;
       margin:0;
@@ -710,7 +789,28 @@
       width:100%;
     }
     .grid-2{ grid-template-columns:1fr; }
-    #map{ height:520px; }
+    #map{ height:calc(100vh - 118px); min-height:420px; }
+    .map-mini-alert{
+      left:10px;
+      right:10px;
+      bottom:10px;
+    }
+    .panel.collapsible{
+      left:0;
+      right:0;
+      top:72px;
+      bottom:0;
+      border-radius:16px 16px 0 0;
+    }
+    .bottom-grid{
+      left:0;
+      right:0;
+      bottom:0;
+      gap:8px;
+    }
+    .bottom-grid .panel{
+      border-radius:16px 16px 0 0;
+    }
   }
 </style>
 </head>
@@ -746,125 +846,8 @@
   </div>
 
   <div class="layout">
-    <div class="sidebar">
-      <div class="quick-actions">
-        <div class="action-card">
-          <h4>📞 Vizov paneli</h4>
-          <p>Yangi murojaat yaratish formasini alohida oynada oching.</p>
-          <button id="openIncidentPanel" class="btn btn-light" type="button" style="width:100%;">Vizov yaratish</button>
-        </div>
-        <div class="action-card">
-          <h4>👮 Hodim paneli</h4>
-          <p>Hodimlarni ko‘rish va biriktirish uchun boshqaruv panelini oching.</p>
-          <button id="openOfficerPanel" class="btn btn-light" type="button" style="width:100%;">Hodimlarni ko‘rish</button>
-        </div>
-      </div>
-
-      <div class="panel collapsible" id="officerPanel">
-        <div class="panel-head">
-          <h3 class="panel-title">Hodimlar boshqaruvi</h3>
-          <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
-        </div>
-
-        <div class="panel-body">
-          <label class="tiny-label">Hodim qidirish</label>
-          <input id="officerSearch" class="inp" placeholder="Masalan: Ali, Karimov, ali123..." />
-          <div id="officerSearchResults" style="margin-top:10px;"></div>
-
-          <div class="picked-box">
-            <div>Tanlangan hodim: <b id="pickedOfficer">—</b></div>
-            <div>Tanlangan vizov: <b id="pickedIncident">—</b></div>
-          </div>
-
-          <button id="assignBtn" class="btn btn-green" style="margin-top:12px;width:100%;" disabled>
-            📌 Tanlangan vizovni hodimga biriktirish
-          </button>
-
-          <div class="footer-note">
-            Eslatma: avval jadvaldan vizovni bosing, keyin hodimni tanlang.
-          </div>
-
-          <button class="toggle" id="toggleOnline">
-            <span>🟢 Online hodimlar</span>
-            <small id="onlineCount">0</small>
-          </button>
-          <div class="section" id="onlineBox"></div>
-
-          <button class="toggle" id="toggleOffline">
-            <span>⚫ Offline hodimlar</span>
-            <small id="offlineCount">0</small>
-          </button>
-          <div class="section" id="offlineBox"></div>
-        </div>
-      </div>
-
-      <div class="panel collapsible" id="incidentPanel">
-        <div class="panel-head">
-          <h3 class="panel-title">Yangi murojaat yaratish</h3>
-          <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
-        </div>
-
-        <div class="panel-body">
-          <form method="POST" action="/create-incident-form/" id="incidentForm">
-            {% csrf_token %}
-
-            <div class="grid-2">
-              <div>
-                <label class="tiny-label">Latitude</label>
-                <input class="inp" type="text" id="lat" name="lat" placeholder="39.6542" />
-              </div>
-              <div>
-                <label class="tiny-label">Longitude</label>
-                <input class="inp" type="text" id="lng" name="lng" placeholder="66.9597" />
-              </div>
-            </div>
-
-            <div style="height:10px"></div>
-
-            <label class="tiny-label">Manzil</label>
-            <input class="inp" type="text" id="address_text" name="address_text" placeholder="Avto to‘ldiriladi yoki qo‘lda yoziladi" />
-
-            <div style="height:10px"></div>
-
-            <label class="tiny-label">Hodisa tafsiloti</label>
-            <textarea class="textarea" id="details" name="details" placeholder="Masalan: yo‘l-transport hodisasi, janjal, tezkor yordam kerak..."></textarea>
-
-            <div style="height:10px"></div>
-
-            <div class="grid-2">
-              <div>
-                <label class="tiny-label">Jabrlanuvchi ismi</label>
-                <input class="inp" type="text" name="victim_first_name" placeholder="Ism" />
-              </div>
-              <div>
-                <label class="tiny-label">Jabrlanuvchi familiyasi</label>
-                <input class="inp" type="text" name="victim_last_name" placeholder="Familiya" />
-              </div>
-            </div>
-
-            <div style="height:10px"></div>
-
-            <label class="tiny-label">Telefon raqami</label>
-            <input class="inp" type="text" name="caller_phone" placeholder="+998..." />
-
-            <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
-              <button class="btn btn-green" type="submit" style="flex:1 1 180px;">
-                🚀 Vizovni yuborish
-              </button>
-              <button class="btn btn-dark" type="button" onclick="cancelDraftMarker()" style="flex:1 1 160px;">
-                Bekor qilish
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-    </div>
-
     <div class="content">
-
-      <div class="panel">
-        <div class="map-shell">
+      <div class="map-shell">
           <div class="map-topbar">
             <div>
               <h3 class="map-title">Operativ xarita</h3>
@@ -883,11 +866,123 @@
           <div class="map-mini-alert" id="miniAlert">
             Tizim tayyor. Xarita ustida vizov nuqtasini tanlang yoki jadvaldan mavjud vizovni bosing.
           </div>
-        </div>
-      </div>
 
-      <div class="bottom-grid">
-        <div class="panel panel-collapsible" id="incidentsPanel">
+          <div class="sidebar">
+            <div class="quick-actions">
+              <div class="action-card">
+                <h4>📞 Vizov paneli</h4>
+                <p>Yangi murojaat yaratish formasini alohida oynada oching.</p>
+                <button id="openIncidentPanel" class="btn btn-light" type="button" style="width:100%;">Vizov yaratish</button>
+              </div>
+              <div class="action-card">
+                <h4>👮 Hodim paneli</h4>
+                <p>Hodimlarni ko‘rish va biriktirish uchun boshqaruv panelini oching.</p>
+                <button id="openOfficerPanel" class="btn btn-light" type="button" style="width:100%;">Hodimlarni ko‘rish</button>
+              </div>
+            </div>
+
+            <div class="panel collapsible" id="officerPanel">
+              <div class="panel-head">
+                <h3 class="panel-title">Hodimlar boshqaruvi</h3>
+                <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
+              </div>
+
+              <div class="panel-body">
+                <label class="tiny-label">Hodim qidirish</label>
+                <input id="officerSearch" class="inp" placeholder="Masalan: Ali, Karimov, ali123..." />
+                <div id="officerSearchResults" style="margin-top:10px;"></div>
+
+                <div class="picked-box">
+                  <div>Tanlangan hodim: <b id="pickedOfficer">—</b></div>
+                  <div>Tanlangan vizov: <b id="pickedIncident">—</b></div>
+                </div>
+
+                <button id="assignBtn" class="btn btn-green" style="margin-top:12px;width:100%;" disabled>
+                  📌 Tanlangan vizovni hodimga biriktirish
+                </button>
+
+                <div class="footer-note">
+                  Eslatma: avval jadvaldan vizovni bosing, keyin hodimni tanlang.
+                </div>
+
+                <button class="toggle" id="toggleOnline">
+                  <span>🟢 Online hodimlar</span>
+                  <small id="onlineCount">0</small>
+                </button>
+                <div class="section" id="onlineBox"></div>
+
+                <button class="toggle" id="toggleOffline">
+                  <span>⚫ Offline hodimlar</span>
+                  <small id="offlineCount">0</small>
+                </button>
+                <div class="section" id="offlineBox"></div>
+              </div>
+            </div>
+
+            <div class="panel collapsible" id="incidentPanel">
+              <div class="panel-head">
+                <h3 class="panel-title">Yangi murojaat yaratish</h3>
+                <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
+              </div>
+
+              <div class="panel-body">
+                <form method="POST" action="/create-incident-form/" id="incidentForm">
+                  {% csrf_token %}
+
+                  <div class="grid-2">
+                    <div>
+                      <label class="tiny-label">Latitude</label>
+                      <input class="inp" type="text" id="lat" name="lat" placeholder="39.6542" />
+                    </div>
+                    <div>
+                      <label class="tiny-label">Longitude</label>
+                      <input class="inp" type="text" id="lng" name="lng" placeholder="66.9597" />
+                    </div>
+                  </div>
+
+                  <div style="height:10px"></div>
+
+                  <label class="tiny-label">Manzil</label>
+                  <input class="inp" type="text" id="address_text" name="address_text" placeholder="Avto to‘ldiriladi yoki qo‘lda yoziladi" />
+
+                  <div style="height:10px"></div>
+
+                  <label class="tiny-label">Hodisa tafsiloti</label>
+                  <textarea class="textarea" id="details" name="details" placeholder="Masalan: yo‘l-transport hodisasi, janjal, tezkor yordam kerak..."></textarea>
+
+                  <div style="height:10px"></div>
+
+                  <div class="grid-2">
+                    <div>
+                      <label class="tiny-label">Jabrlanuvchi ismi</label>
+                      <input class="inp" type="text" name="victim_first_name" placeholder="Ism" />
+                    </div>
+                    <div>
+                      <label class="tiny-label">Jabrlanuvchi familiyasi</label>
+                      <input class="inp" type="text" name="victim_last_name" placeholder="Familiya" />
+                    </div>
+                  </div>
+
+                  <div style="height:10px"></div>
+
+                  <label class="tiny-label">Telefon raqami</label>
+                  <input class="inp" type="text" name="caller_phone" placeholder="+998..." />
+
+                  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+                    <button class="btn btn-green" type="submit" style="flex:1 1 180px;">
+                      🚀 Vizovni yuborish
+                    </button>
+                    <button class="btn btn-dark" type="button" onclick="cancelDraftMarker()" style="flex:1 1 160px;">
+                      Bekor qilish
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-grid">
+            <div class="panel panel-collapsible" id="incidentsPanel">
           <div class="panel-head panel-toggle-head" id="incidentsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Murojaatlar holati</h3>
@@ -919,9 +1014,9 @@
               </table>
             </div>
           </div>
-        </div>
+            </div>
 
-        <div class="panel panel-collapsible" id="arrivalsPanel">
+            <div class="panel panel-collapsible" id="arrivalsPanel">
           <div class="panel-head panel-toggle-head" id="arrivalsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Bugungi yetib borishlar</h3>
@@ -951,9 +1046,9 @@
               </table>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
       </div>
-
     </div>
   </div>
 

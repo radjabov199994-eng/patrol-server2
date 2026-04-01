@@ -4,6 +4,7 @@
   <title>Patrol Dashboard Premium</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
   :root{
@@ -148,6 +149,36 @@
     flex-direction:column;
     gap:14px;
     min-width:0;
+  }
+  .sidebar-switcher{
+    display:flex;
+    gap:8px;
+    padding:8px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:linear-gradient(180deg, rgba(8,14,28,.88), rgba(5,10,20,.86));
+  }
+  .sidebar-tab{
+    flex:1 1 50%;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.03);
+    color:#dbe8ff;
+    border-radius:12px;
+    padding:10px 12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+  }
+  .sidebar-tab.active{
+    border-color:rgba(96,165,250,.46);
+    background:linear-gradient(180deg, rgba(59,130,246,.22), rgba(59,130,246,.09));
+    box-shadow:0 8px 22px rgba(30,64,175,.22);
+  }
+  .sidebar-collapsible{
+    display:none;
+  }
+  .sidebar-collapsible.open{
+    display:block;
   }
 
   .content{
@@ -620,7 +651,12 @@
   <div class="layout">
     <div class="sidebar">
 
-      <div class="panel">
+      <div class="sidebar-switcher">
+        <button id="officerTabBtn" class="sidebar-tab active" type="button">👮 Hodim tanlash</button>
+        <button id="incidentTabBtn" class="sidebar-tab" type="button">🚨 Vizov yuborish</button>
+      </div>
+
+      <div id="officerPanel" class="panel shadow-sm sidebar-collapsible open">
         <div class="panel-head">
           <h3 class="panel-title">Hodimlar boshqaruvi</h3>
           <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
@@ -628,15 +664,15 @@
 
         <div class="panel-body">
           <label class="tiny-label">Hodim qidirish</label>
-          <input id="officerSearch" class="inp" placeholder="Masalan: Ali, Karimov, ali123..." />
+          <input id="officerSearch" class="inp form-control" placeholder="Masalan: Ali, Karimov, ali123..." />
           <div id="officerSearchResults" style="margin-top:10px;"></div>
 
-          <div class="picked-box">
+          <div class="picked-box mt-3">
             <div>Tanlangan hodim: <b id="pickedOfficer">—</b></div>
             <div>Tanlangan vizov: <b id="pickedIncident">—</b></div>
           </div>
 
-          <button id="assignBtn" class="btn btn-green" style="margin-top:12px;width:100%;" disabled>
+          <button id="assignBtn" class="btn btn-green w-100 mt-3" disabled>
             📌 Tanlangan vizovni hodimga biriktirish
           </button>
 
@@ -646,19 +682,19 @@
 
           <button class="toggle" id="toggleOnline">
             <span>🟢 Online hodimlar</span>
-            <small id="onlineCount">0</small>
+            <small id="onlineCount" class="badge text-bg-success rounded-pill">0</small>
           </button>
           <div class="section" id="onlineBox"></div>
 
           <button class="toggle" id="toggleOffline">
             <span>⚫ Offline hodimlar</span>
-            <small id="offlineCount">0</small>
+            <small id="offlineCount" class="badge text-bg-secondary rounded-pill">0</small>
           </button>
           <div class="section" id="offlineBox"></div>
         </div>
       </div>
 
-      <div class="panel">
+      <div id="incidentPanel" class="panel sidebar-collapsible">
         <div class="panel-head">
           <h3 class="panel-title">Yangi murojaat yaratish</h3>
           <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
@@ -723,44 +759,44 @@
 
     <div class="content">
 
-      <div class="panel">
+      <div class="panel shadow-sm">
         <div class="map-shell">
-          <div class="map-topbar">
+          <div class="map-topbar border-bottom border-secondary-subtle">
             <div>
-              <h3 class="map-title">Operativ xarita</h3>
+              <h3 class="map-title mb-1">Operativ xarita</h3>
               <div class="panel-sub">Hodimlar joylashuvi, murojaatlar va marshrut kuzatuvi</div>
             </div>
 
-            <div class="toolbar">
-              <input id="searchBox" class="inp" placeholder="Samarqand bo‘yicha manzil qidiring..." />
-              <button id="searchBtn" class="btn" type="button">Qidirish</button>
-              <button id="refreshBtn" class="btn btn-light" type="button">Yangilash</button>
+            <div class="toolbar d-flex flex-wrap gap-2">
+              <input id="searchBox" class="inp form-control" placeholder="Samarqand bo‘yicha manzil qidiring..." />
+              <button id="searchBtn" class="btn btn-primary" type="button">Qidirish</button>
+              <button id="refreshBtn" class="btn btn-outline-light" type="button">Yangilash</button>
             </div>
           </div>
 
           <div id="map"></div>
 
-          <div class="map-mini-alert" id="miniAlert">
+          <div class="map-mini-alert alert alert-info py-2 px-3 m-3 mb-0" id="miniAlert">
             Tizim tayyor. Xarita ustida vizov nuqtasini tanlang yoki jadvaldan mavjud vizovni bosing.
           </div>
         </div>
       </div>
 
       <div class="bottom-grid">
-        <div class="panel">
+        <div class="panel shadow-sm">
           <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Murojaatlar holati</h3>
               <div class="panel-sub">Biriktirilgan, qabul qilingan, yetib borilgan va yopilgan murojaatlar ro‘yxati</div>
             </div>
 
-            <a class="btn btn-light" href="/reports/daily.xlsx" target="_blank">📥 Excel yuklab olish</a>
+            <a class="btn btn-outline-light btn-sm" href="/reports/daily.xlsx" target="_blank">📥 Excel yuklab olish</a>
           </div>
 
           <div class="panel-body">
-            <div class="table-wrap">
-              <table>
-                <thead>
+            <div class="table-wrap table-responsive">
+              <table class="table table-dark table-hover align-middle mb-0">
+                <thead class="table-secondary">
                   <tr>
                     <th>#</th>
                     <th>Status</th>
@@ -779,20 +815,20 @@
           </div>
         </div>
 
-        <div class="panel">
+        <div class="panel shadow-sm">
           <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Bugungi yetib borishlar</h3>
               <div class="panel-sub">Qisqacha jadval. To‘liq ma’lumot Excel’da.</div>
             </div>
 
-            <a class="btn btn-light" id="excelBtn" href="/reports/daily.xlsx" target="_blank">📊 Excel ochish</a>
+            <a class="btn btn-outline-light btn-sm" id="excelBtn" href="/reports/daily.xlsx" target="_blank">📊 Excel ochish</a>
           </div>
 
           <div class="panel-body">
-            <div class="table-wrap" style="max-height:220px;">
-              <table>
-                <thead>
+            <div class="table-wrap table-responsive" style="max-height:220px;">
+              <table class="table table-dark table-striped align-middle mb-0">
+                <thead class="table-secondary">
                   <tr>
                     <th>#</th>
                     <th>Hodim</th>
@@ -816,6 +852,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function getCookie(name) {
   const v = `; ${document.cookie}`;
@@ -1630,7 +1667,34 @@ async function assignSelected(){
 document.getElementById("assignBtn").onclick = assignSelected;
 document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
 
+function openSidebarPanel(panel){
+  const officerBtn = document.getElementById("officerTabBtn");
+  const incidentBtn = document.getElementById("incidentTabBtn");
+  const officerPanel = document.getElementById("officerPanel");
+  const incidentPanel = document.getElementById("incidentPanel");
+
+  if (panel === "incident"){
+    incidentPanel.classList.add("open");
+    officerPanel.classList.remove("open");
+    incidentBtn.classList.add("active");
+    officerBtn.classList.remove("active");
+  } else {
+    officerPanel.classList.add("open");
+    incidentPanel.classList.remove("open");
+    officerBtn.classList.add("active");
+    incidentBtn.classList.remove("active");
+  }
+}
+
+document.getElementById("officerTabBtn").addEventListener("click", function(){
+  openSidebarPanel("officer");
+});
+document.getElementById("incidentTabBtn").addEventListener("click", function(){
+  openSidebarPanel("incident");
+});
+
 /* START */
+openSidebarPanel("officer");
 setPickedUI();
 loadOfficers();
 loadIncidents();

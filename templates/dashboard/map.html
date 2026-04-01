@@ -1192,11 +1192,25 @@ function renderOfficers(list) {
 }
 
 function renderOfficerPanels(list){
+  if (!Array.isArray(list)) {
+    const onlineCountEl = document.getElementById("onlineCount");
+    const offlineCountEl = document.getElementById("offlineCount");
+    const onlineBoxEl = document.getElementById("onlineBox");
+    const offlineBoxEl = document.getElementById("offlineBox");
+    if (onlineCountEl) onlineCountEl.innerText = "0";
+    if (offlineCountEl) offlineCountEl.innerText = "0";
+    if (onlineBoxEl) onlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    if (offlineBoxEl) offlineBoxEl.innerHTML = '<div class="muted" style="padding:10px">Ma’lumot yo‘q</div>';
+    return;
+  }
+
   var online = list.filter(o => isOnlineByLastSeen(o, 30));
   var offline = list.filter(o => !isOnlineByLastSeen(o, 30));
 
-  document.getElementById("onlineCount").innerText = online.length;
-  document.getElementById("offlineCount").innerText = offline.length;
+  const onlineCountEl = document.getElementById("onlineCount");
+  const offlineCountEl = document.getElementById("offlineCount");
+  if (onlineCountEl) onlineCountEl.innerText = online.length;
+  if (offlineCountEl) offlineCountEl.innerText = offline.length;
 
   function row(o){
     var onlineNow = isOnlineByLastSeen(o, 30);
@@ -1212,11 +1226,15 @@ function renderOfficerPanels(list){
     );
   }
 
-  document.getElementById("onlineBox").innerHTML =
-    online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  const onlineBoxEl = document.getElementById("onlineBox");
+  const offlineBoxEl = document.getElementById("offlineBox");
 
-  document.getElementById("offlineBox").innerHTML =
-    offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  if (onlineBoxEl) {
+    onlineBoxEl.innerHTML = online.map(row).join("") || '<div class="muted" style="padding:10px">Online yo‘q</div>';
+  }
+  if (offlineBoxEl) {
+    offlineBoxEl.innerHTML = offline.map(row).join("") || '<div class="muted" style="padding:10px">Offline yo‘q</div>';
+  }
 }
 
 /* INCIDENT TABLE */
@@ -1343,10 +1361,13 @@ function renderArrivalStats(list){
 /* TOGGLE */
 function toggle(id){
   var el = document.getElementById(id);
+  if (!el) return;
   el.classList.toggle("open");
 }
-document.getElementById("toggleOnline").onclick = function(){ toggle("onlineBox"); };
-document.getElementById("toggleOffline").onclick = function(){ toggle("offlineBox"); };
+const toggleOnlineBtn = document.getElementById("toggleOnline");
+const toggleOfflineBtn = document.getElementById("toggleOffline");
+if (toggleOnlineBtn) toggleOnlineBtn.onclick = function(){ toggle("onlineBox"); };
+if (toggleOfflineBtn) toggleOfflineBtn.onclick = function(){ toggle("offlineBox"); };
 
 /* LOADERS */
 function loadOfficers(){
@@ -1356,7 +1377,7 @@ function loadOfficers(){
   return fetch("/api/admin/officers/")
     .then(r => { if(!r.ok) throw new Error("officers api: " + r.status); return r.json(); })
     .then(list => {
-      officersCache = list || [];
+      officersCache = Array.isArray(list) ? list : [];
       renderOfficerPanels(officersCache);
       renderOfficers(officersCache);
       updateDashboardTicker();
@@ -1372,7 +1393,7 @@ function loadIncidents(){
   return fetch("/api/incidents/")
     .then(r => { if(!r.ok) throw new Error("incidents api: " + r.status); return r.json(); })
     .then(list => {
-      incidentsCache = list || [];
+      incidentsCache = Array.isArray(list) ? list : [];
       renderIncidentsTable(incidentsCache);
       renderArrivalStats(incidentsCache);
       renderIncidentMarkers(incidentsCache);
@@ -1435,8 +1456,10 @@ map.on('click', function(e){
   setMiniAlert(`Yangi nuqta tanlandi: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`);
 });
 
-document.getElementById("searchBtn").onclick = function(){
-  var q = document.getElementById("searchBox").value.trim();
+const searchBtn = document.getElementById("searchBtn");
+if (searchBtn) searchBtn.onclick = function(){
+  const searchBox = document.getElementById("searchBox");
+  var q = searchBox ? searchBox.value.trim() : "";
   if (!q){
     alert("Manzil kiriting");
     return;
@@ -1516,7 +1539,8 @@ document.getElementById("searchBtn").onclick = function(){
   trySearch(0);
 };
 
-document.getElementById("refreshBtn").onclick = function(){
+const refreshBtn = document.getElementById("refreshBtn");
+if (refreshBtn) refreshBtn.onclick = function(){
   loadOfficers();
   loadIncidents();
   setMiniAlert("Ma’lumotlar yangilanmoqda...");
@@ -1533,15 +1557,19 @@ function officerLabel(o){
 }
 
 function setPickedUI(){
-  document.getElementById("pickedOfficer").innerText =
-    selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
-
-  document.getElementById("pickedIncident").innerText =
-    selectedIncidentId ? ("#" + selectedIncidentId) : "—";
-
+  const pickedOfficerEl = document.getElementById("pickedOfficer");
+  const pickedIncidentEl = document.getElementById("pickedIncident");
   const btn = document.getElementById("assignBtn");
   const ok = !!selectedOfficerId && !!selectedIncidentId;
-  btn.disabled = !ok;
+
+  if (pickedOfficerEl) {
+    pickedOfficerEl.innerText =
+      selectedOfficerId ? officerLabel(officersCache.find(x => x.id === selectedOfficerId) || {id:selectedOfficerId}) : "—";
+  }
+  if (pickedIncidentEl) {
+    pickedIncidentEl.innerText = selectedIncidentId ? ("#" + selectedIncidentId) : "—";
+  }
+  if (btn) btn.disabled = !ok;
 }
 
 window.focusOfficer = function(officerId){
@@ -1583,9 +1611,12 @@ function renderOfficerSearchResults(items){
 }
 
 function handleOfficerSearch(){
-  const q = norm(document.getElementById("officerSearch").value);
+  const searchEl = document.getElementById("officerSearch");
+  if (!searchEl) return;
+  const q = norm(searchEl.value);
   if (!q){
-    document.getElementById("officerSearchResults").innerHTML = "";
+    const resultsEl = document.getElementById("officerSearchResults");
+    if (resultsEl) resultsEl.innerHTML = "";
     return;
   }
 
@@ -1627,8 +1658,10 @@ async function assignSelected(){
   }
 }
 
-document.getElementById("assignBtn").onclick = assignSelected;
-document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
+const assignBtnEl = document.getElementById("assignBtn");
+const officerSearchEl = document.getElementById("officerSearch");
+if (assignBtnEl) assignBtnEl.onclick = assignSelected;
+if (officerSearchEl) officerSearchEl.addEventListener("input", handleOfficerSearch);
 
 /* START */
 setPickedUI();

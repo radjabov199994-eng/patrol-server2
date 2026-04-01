@@ -150,6 +150,32 @@
     min-width:0;
   }
 
+  .quick-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .action-card{
+    border:1px solid rgba(96,165,250,.2);
+    border-radius:16px;
+    padding:14px;
+    background:linear-gradient(165deg, rgba(29,78,216,.2), rgba(15,23,42,.86));
+    box-shadow:0 10px 20px rgba(0,0,0,.25);
+  }
+
+  .action-card h4{
+    margin:0 0 6px;
+    font-size:15px;
+  }
+
+  .action-card p{
+    margin:0 0 10px;
+    color:#bfd1f8;
+    font-size:12px;
+    line-height:1.4;
+  }
+
   .content{
     display:flex;
     flex-direction:column;
@@ -164,6 +190,20 @@
     box-shadow:0 14px 32px rgba(0,0,0,.28);
     overflow:hidden;
     min-width:0;
+  }
+
+  .panel.collapsible{
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transition:max-height .35s ease, opacity .35s ease;
+    border-color:transparent;
+  }
+
+  .panel.collapsible.open{
+    max-height:1600px;
+    opacity:1;
+    border-color:rgba(255,255,255,.07);
   }
 
   .panel-head{
@@ -522,6 +562,42 @@
     box-shadow:0 10px 18px rgba(0,0,0,.12);
   }
 
+  .assign-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(3,7,18,.72);
+    backdrop-filter:blur(6px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    padding:14px;
+  }
+
+  .assign-modal.open{
+    display:flex;
+  }
+
+  .assign-card{
+    width:min(680px, 100%);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:20px;
+    background:linear-gradient(180deg, rgba(12,19,36,.97), rgba(9,15,27,.97));
+    box-shadow:0 30px 60px rgba(0,0,0,.42);
+    overflow:hidden;
+  }
+
+  .assign-head{
+    padding:16px 18px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+
+  .assign-body{
+    padding:14px 18px 18px;
+    max-height:56vh;
+    overflow:auto;
+  }
+
   .markerWrap{
     position:relative;
     width:100%;
@@ -619,8 +695,20 @@
 
   <div class="layout">
     <div class="sidebar">
+      <div class="quick-actions">
+        <div class="action-card">
+          <h4>📞 Vizov paneli</h4>
+          <p>Yangi murojaat yaratish formasini alohida oynada oching.</p>
+          <button id="openIncidentPanel" class="btn btn-light" type="button" style="width:100%;">Vizov yaratish</button>
+        </div>
+        <div class="action-card">
+          <h4>👮 Hodim paneli</h4>
+          <p>Hodimlarni ko‘rish va biriktirish uchun boshqaruv panelini oching.</p>
+          <button id="openOfficerPanel" class="btn btn-light" type="button" style="width:100%;">Hodimlarni ko‘rish</button>
+        </div>
+      </div>
 
-      <div class="panel">
+      <div class="panel collapsible" id="officerPanel">
         <div class="panel-head">
           <h3 class="panel-title">Hodimlar boshqaruvi</h3>
           <div class="panel-sub">Hodimni qidiring, tanlang va murojaatni biriktiring</div>
@@ -658,7 +746,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel collapsible" id="incidentPanel">
         <div class="panel-head">
           <h3 class="panel-title">Yangi murojaat yaratish</h3>
           <div class="panel-sub">Xaritadan yoki qidiruv orqali manzilni tanlang</div>
@@ -815,6 +903,23 @@
 
 </div>
 
+<div class="assign-modal" id="assignModal">
+  <div class="assign-card">
+    <div class="assign-head">
+      <h3 class="panel-title" style="font-size:20px;">Biriktirish tasdiqlash</h3>
+      <div class="panel-sub" id="assignModalText">Vizov tanlang.</div>
+    </div>
+    <div class="assign-body">
+      <label class="tiny-label">Hodimni tanlang (online ro‘yxat ustuvor)</label>
+      <div id="assignModalList"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button id="assignModalConfirm" class="btn btn-green" type="button" style="flex:1 1 180px;" disabled>Biriktirishni tasdiqlash</button>
+        <button id="assignModalClose" class="btn btn-dark" type="button" style="flex:1 1 140px;">Yopish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 function getCookie(name) {
@@ -960,8 +1065,16 @@ var incidentsCache = [];
 var officerMarkers = {};
 var selectedOfficerId = null;
 var selectedIncidentId = null;
+var assignModalIncidentId = null;
 let __officersInFlight = false;
 let __incidentsInFlight = false;
+
+function openPanel(panelId){
+  const officerPanel = document.getElementById("officerPanel");
+  const incidentPanel = document.getElementById("incidentPanel");
+  if (officerPanel) officerPanel.classList.toggle("open", panelId === "officerPanel");
+  if (incidentPanel) incidentPanel.classList.toggle("open", panelId === "incidentPanel");
+}
 
 /* ICON CACHE */
 const __ICON_CACHE = new Map();
@@ -1134,6 +1247,56 @@ function drawSelectedRoute(inc){
     });
 }
 
+function closeAssignModal(){
+  const modal = document.getElementById("assignModal");
+  if (modal) modal.classList.remove("open");
+  assignModalIncidentId = null;
+  document.getElementById("assignModalConfirm").disabled = true;
+}
+
+function renderAssignModalList(){
+  const box = document.getElementById("assignModalList");
+  if (!box) return;
+  const sorted = [...(officersCache || [])].sort((a,b) => {
+    const ao = isOnlineByLastSeen(a,30) ? 1 : 0;
+    const bo = isOnlineByLastSeen(b,30) ? 1 : 0;
+    if (ao !== bo) return bo - ao;
+    return (a.username || "").localeCompare(b.username || "");
+  });
+
+  box.innerHTML = sorted.map(o => {
+    const online = isOnlineByLastSeen(o,30);
+    const activeCls = selectedOfficerId === o.id ? "border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08);" : "";
+    return `<div class="list-card" style="${activeCls}" onclick="focusOfficer(${o.id});onAssignOfficerPick(${o.id})">
+      <div class="list-card-title">
+        <span>${officerLabel(o)}</span>
+        <span class="pill">${online ? "🟢 Online" : "⚫ Offline"}</span>
+      </div>
+      <div class="muted" style="margin-top:8px;">${o.position || "Lavozim yo‘q"} • ${o.phone || "Tel yo‘q"}</div>
+    </div>`;
+  }).join("") || '<div class="muted">Hodim topilmadi</div>';
+}
+
+window.onAssignOfficerPick = function(officerId){
+  selectedOfficerId = officerId;
+  setPickedUI();
+  renderAssignModalList();
+  document.getElementById("assignModalConfirm").disabled = !(assignModalIncidentId && selectedOfficerId);
+};
+
+function openAssignModal(incident){
+  assignModalIncidentId = incident.id;
+  selectedIncidentId = incident.id;
+  setPickedUI();
+  const text = document.getElementById("assignModalText");
+  if (text){
+    text.innerHTML = `Vizov <b>#${incident.id}</b> tanlandi. Qaysi hodimga biriktirasiz?`;
+  }
+  renderAssignModalList();
+  document.getElementById("assignModalConfirm").disabled = !(assignModalIncidentId && selectedOfficerId);
+  document.getElementById("assignModal").classList.add("open");
+}
+
 window.focusIncident = function(incidentId){
   selectedIncidentId = incidentId;
   setPickedUI();
@@ -1148,6 +1311,8 @@ window.focusIncident = function(incidentId){
 
   if (!inc.assigned_officer){
     setMiniAlert(`Vizov <b>#${inc.id}</b> tanlandi. Hali hodim biriktirilmagan.`);
+    openAssignModal(inc);
+    openPanel("officerPanel");
     return;
   }
 
@@ -1598,12 +1763,13 @@ function handleOfficerSearch(){
 }
 
 async function assignSelected(){
-  if (!selectedIncidentId || !selectedOfficerId) return;
+  const incidentForAssign = assignModalIncidentId || selectedIncidentId;
+  if (!incidentForAssign || !selectedOfficerId) return;
 
   const csrftoken = getCookie("csrftoken");
 
   try{
-    const r = await fetch(`/api/incidents/${selectedIncidentId}/assign/`, {
+    const r = await fetch(`/api/incidents/${incidentForAssign}/assign/`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -1620,7 +1786,8 @@ async function assignSelected(){
     }
 
     await loadIncidents();
-    setMiniAlert(`Vizov <b>#${selectedIncidentId}</b> hodimga muvaffaqiyatli biriktirildi.`);
+    setMiniAlert(`Vizov <b>#${incidentForAssign}</b> hodimga muvaffaqiyatli biriktirildi.`);
+    closeAssignModal();
     alert("✅ Biriktirildi");
   }catch(e){
     alert("Network xato: " + (e.message || e));
@@ -1629,9 +1796,17 @@ async function assignSelected(){
 
 document.getElementById("assignBtn").onclick = assignSelected;
 document.getElementById("officerSearch").addEventListener("input", handleOfficerSearch);
+document.getElementById("openOfficerPanel").onclick = function(){ openPanel("officerPanel"); };
+document.getElementById("openIncidentPanel").onclick = function(){ openPanel("incidentPanel"); };
+document.getElementById("assignModalClose").onclick = closeAssignModal;
+document.getElementById("assignModalConfirm").onclick = assignSelected;
+document.getElementById("assignModal").addEventListener("click", function(e){
+  if (e.target && e.target.id === "assignModal") closeAssignModal();
+});
 
 /* START */
 setPickedUI();
+openPanel("incidentPanel");
 loadOfficers();
 loadIncidents();
 updateDashboardTicker();

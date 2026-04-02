@@ -158,6 +158,9 @@
     width:min(360px, calc(100% - 32px));
     z-index:900;
     pointer-events:none;
+    max-height:calc(100vh - 210px);
+    overflow:auto;
+    padding-right:2px;
   }
 
   .quick-actions{
@@ -466,10 +469,51 @@
     flex-wrap:wrap;
     align-items:center;
     pointer-events:auto;
+    position:relative;
   }
 
   .toolbar .inp{
     min-width:250px;
+  }
+
+  .search-results{
+    position:absolute;
+    top:48px;
+    left:0;
+    width:min(520px, 100%);
+    max-height:280px;
+    overflow:auto;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:14px;
+    background:rgba(10,18,34,.96);
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+    z-index:999;
+    display:none;
+  }
+
+  .search-item{
+    padding:10px 12px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    cursor:pointer;
+  }
+
+  .search-item:last-child{ border-bottom:none; }
+
+  .search-item:hover{
+    background:rgba(59,130,246,.14);
+  }
+
+  .search-item-title{
+    font-size:13px;
+    font-weight:800;
+    color:#eaf2ff;
+  }
+
+  .search-item-sub{
+    margin-top:4px;
+    font-size:12px;
+    color:#a8b6d3;
+    line-height:1.35;
   }
 
   .dashboardTicker{
@@ -817,6 +861,7 @@
               <input id="searchBox" class="inp" placeholder="Samarqand bo‘yicha manzil qidiring..." />
               <button id="searchBtn" class="btn" type="button">Qidirish</button>
               <button id="refreshBtn" class="btn btn-light" type="button">Yangilash</button>
+              <div id="searchResults" class="search-results"></div>
             </div>
           </div>
 
@@ -1135,6 +1180,85 @@ function sameLocalDay(iso){
 function setMiniAlert(text){
   const el = document.getElementById("miniAlert");
   if (el) el.innerHTML = text;
+}
+
+const SAMARKAND_BBOX = {
+  minLat: 38.90,
+  maxLat: 40.65,
+  minLng: 65.20,
+  maxLng: 68.15,
+};
+
+function isInsideSamarqand(lat, lng){
+  return lat >= SAMARKAND_BBOX.minLat &&
+         lat <= SAMARKAND_BBOX.maxLat &&
+         lng >= SAMARKAND_BBOX.minLng &&
+         lng <= SAMARKAND_BBOX.maxLng;
+}
+
+function isSamarqandResult(item){
+  const txt = String(item?.display_name || "").toLowerCase();
+  const a = item?.address || {};
+  const addrTxt = [a.state, a.region, a.county, a.city, a.town, a.village].filter(Boolean).join(" ").toLowerCase();
+  return txt.includes("samarqand") || txt.includes("samarkand") || addrTxt.includes("samarqand") || addrTxt.includes("samarkand");
+}
+
+function clearSearchResults(){
+  const box = document.getElementById("searchResults");
+  if (!box) return;
+  box.style.display = "none";
+  box.innerHTML = "";
+}
+
+function pickSearchResult(item){
+  if (!item) return;
+  const lat = parseFloat(item.lat);
+  const lon = parseFloat(item.lon);
+  if (isNaN(lat) || isNaN(lon)) return;
+  if (!isInsideSamarqand(lat, lon)) {
+    setMiniAlert("⚠️ Tanlangan manzil Samarqand viloyatidan tashqarida.");
+    return;
+  }
+
+  map.setView([lat, lon], 16);
+  document.getElementById("lat").value = lat.toFixed(6);
+  document.getElementById("lng").value = lon.toFixed(6);
+  document.getElementById("address_text").value = item.display_name || "";
+
+  if (clickMarker) map.removeLayer(clickMarker);
+  clickMarker = L.marker([lat, lon]).addTo(map).bindPopup(
+    "<b>Qidiruv natijasi</b><br/><div style='margin-top:6px'>" + (item.display_name || "") + "</div>"
+  ).openPopup();
+
+  clearSearchResults();
+  setMiniAlert("Qidiruv natijasi tanlandi: <b>" + (item.display_name || "") + "</b>");
+}
+
+function renderSearchResults(items){
+  const box = document.getElementById("searchResults");
+  if (!box) return;
+  if (!items || !items.length){
+    box.style.display = "none";
+    box.innerHTML = "";
+    setMiniAlert("Samarqand bo‘yicha mos manzil topilmadi.");
+    return;
+  }
+
+  box.innerHTML = items.map((it, idx) => {
+    const title = it.name || it.display_name?.split(",")[0] || ("Natija " + (idx + 1));
+    return `<div class="search-item" data-search-idx="${idx}">
+      <div class="search-item-title">${title}</div>
+      <div class="search-item-sub">${it.display_name || ""}</div>
+    </div>`;
+  }).join("");
+  box.style.display = "block";
+
+  box.querySelectorAll("[data-search-idx]").forEach(el => {
+    el.addEventListener("click", function(){
+      const idx = Number(el.getAttribute("data-search-idx"));
+      pickSearchResult(items[idx]);
+    });
+  });
 }
 
 /* ✅ MAP INIT — CARTO FIX */
@@ -1814,79 +1938,42 @@ if (searchBtn) searchBtn.onclick = function(){
     return;
   }
 
-  var variants = [
-    q + ", Samarqand",
-    q + ", Samarqand shahri",
-    q + ", Samarqand viloyati"
-  ];
+  const query = encodeURIComponent(q);
+  const viewbox = `${SAMARKAND_BBOX.minLng},${SAMARKAND_BBOX.maxLat},${SAMARKAND_BBOX.maxLng},${SAMARKAND_BBOX.minLat}`;
+  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2"
+    + "&addressdetails=1"
+    + "&countrycodes=uz"
+    + "&bounded=1"
+    + "&limit=12"
+    + "&viewbox=" + encodeURIComponent(viewbox)
+    + "&q=" + query;
 
-  function isSamarqandResult(item){
-    if (!item || !item.display_name) return false;
-    var s = item.display_name.toLowerCase();
-    return s.indexOf("samarqand") !== -1 || s.indexOf("samarkand") !== -1;
-  }
-
-  function trySearch(index){
-    if (index >= variants.length){
-      alert("Samarqand bo‘yicha topilmadi");
-      return;
-    }
-
-    var query = encodeURIComponent(variants[index]);
-
-    fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + query + "&limit=5")
-      .then(function(r){
-        return r.json();
-      })
-      .then(function(list){
-        if (!list || !list.length){
-          trySearch(index + 1);
-          return;
-        }
-
-        var found = null;
-        for (var i = 0; i < list.length; i++) {
-          if (isSamarqandResult(list[i])) {
-            found = list[i];
-            break;
-          }
-        }
-
-        if (!found){
-          trySearch(index + 1);
-          return;
-        }
-
-        var lat = parseFloat(found.lat);
-        var lon = parseFloat(found.lon);
-
-        if (isNaN(lat) || isNaN(lon)){
-          trySearch(index + 1);
-          return;
-        }
-
-        map.setView([lat, lon], 16);
-
-        document.getElementById("lat").value = lat.toFixed(6);
-        document.getElementById("lng").value = lon.toFixed(6);
-        document.getElementById("address_text").value = found.display_name || "";
-
-        if (clickMarker) map.removeLayer(clickMarker);
-
-        clickMarker = L.marker([lat, lon]).addTo(map).bindPopup(
-          "<b>Qidiruv natijasi</b><br/>" +
-          "<div style='margin-top:6px'>" + (found.display_name || "") + "</div>"
-        ).openPopup();
-
-        setMiniAlert("Qidiruv natijasi topildi: <b>" + (found.display_name || q) + "</b>");
-      })
-      .catch(function(){
-        trySearch(index + 1);
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(list){
+      const filtered = (list || []).filter(function(item){
+        const lat = parseFloat(item.lat);
+        const lon = parseFloat(item.lon);
+        if (isNaN(lat) || isNaN(lon)) return false;
+        if (!isInsideSamarqand(lat, lon)) return false;
+        return isSamarqandResult(item);
       });
-  }
-
-  trySearch(0);
+      renderSearchResults(filtered);
+      if (filtered.length) {
+        setMiniAlert("Bir nechta natija topildi. Keraklisini ro‘yxatdan tanlang.");
+      }
+    })
+    .catch(function(){
+      clearSearchResults();
+      setMiniAlert("⚠️ Qidiruvda xatolik. Internetni tekshirib qayta urinib ko‘ring.");
+    });
 };
+
+document.addEventListener("click", function(e){
+  const searchWrap = document.querySelector(".toolbar");
+  if (!searchWrap) return;
+  if (!searchWrap.contains(e.target)) clearSearchResults();
+});
 
 const refreshBtn = document.getElementById("refreshBtn");
 if (refreshBtn) refreshBtn.onclick = function(){

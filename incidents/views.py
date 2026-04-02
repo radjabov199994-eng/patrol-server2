@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from accounts.models import User
 from .models import Incident
-from .services import assign_nearest_online_officer
+from .services import assign_nearest_online_officer, assign_incident_to_officer
 
 
 # =========================
@@ -122,9 +122,7 @@ class AssignIncidentView(APIView):
         if getattr(officer, "role", None) != User.Role.OFFICER:
             return Response({"detail": "Selected user is not OFFICER"}, status=400)
 
-        inc.assigned_officer = officer
-        inc.status = "ASSIGNED"
-        inc.save()
+        assign_incident_to_officer(inc, officer)
 
         return Response({
             "ok": True,
@@ -136,10 +134,6 @@ class AssignIncidentView(APIView):
 # =========================
 # API: Incidentlar ro'yxati (Admin uchun FULL)
 # =========================
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
 class IncidentListView(APIView):
     permission_classes = [IsAuthenticated]
 

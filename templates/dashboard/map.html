@@ -543,33 +543,9 @@
     font-weight:700;
   }
 
-  .bottom-grid{
-    position:absolute;
-    left:16px;
-    right:16px;
-    bottom:70px;
-    display:grid;
-    grid-template-columns:1fr;
-    gap:10px;
-    z-index:850;
-    pointer-events:none;
-  }
-
   .sidebar .action-card,
-  .sidebar .panel,
-  .bottom-grid .panel{
+  .sidebar .panel{
     pointer-events:auto;
-  }
-
-  .panel-collapsible .panel-body{
-    display:none;
-    max-height:42vh;
-    overflow:auto;
-  }
-
-  .panel-collapsible.open .panel-body{
-    display:block;
-    animation:fadeSlide .22s ease;
   }
 
   .panel-toggle-head{
@@ -750,14 +726,6 @@
       max-height:calc(100vh - 190px);
       overflow:auto;
     }
-    .bottom-grid{
-      left:10px;
-      right:10px;
-      bottom:10px;
-    }
-    .bottom-grid .panel{
-      border-radius:16px;
-    }
     .toolbar .inp{ min-width:180px; width:100%; }
     .header{ grid-template-columns:1fr; }
     .dashboardTicker{ max-width:100%; margin:0; }
@@ -800,15 +768,6 @@
       right:0;
       top:72px;
       bottom:0;
-      border-radius:16px 16px 0 0;
-    }
-    .bottom-grid{
-      left:0;
-      right:0;
-      bottom:0;
-      gap:8px;
-    }
-    .bottom-grid .panel{
       border-radius:16px 16px 0 0;
     }
   }
@@ -989,10 +948,8 @@
                 </form>
               </div>
             </div>
-          </div>
 
-          <div class="bottom-grid">
-            <div class="panel panel-collapsible" id="incidentsPanel">
+            <div class="panel collapsible" id="incidentsPanel">
           <div class="panel-head panel-toggle-head" id="incidentsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Murojaatlar holati</h3>
@@ -1026,7 +983,7 @@
           </div>
             </div>
 
-            <div class="panel panel-collapsible" id="arrivalsPanel">
+            <div class="panel collapsible" id="arrivalsPanel">
           <div class="panel-head panel-toggle-head" id="arrivalsPanelToggle" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div>
               <h3 class="panel-title">Bugungi yetib borishlar</h3>
@@ -1057,7 +1014,6 @@
             </div>
           </div>
             </div>
-          </div>
       </div>
     </div>
   </div>

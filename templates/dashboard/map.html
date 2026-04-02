@@ -155,7 +155,7 @@
     position:absolute;
     top:16px;
     left:16px;
-    width:min(360px, calc(100% - 32px));
+    width:min(1260px, calc(100% - 32px));
     z-index:900;
     pointer-events:none;
     max-height:calc(100vh - 210px);
@@ -165,7 +165,7 @@
 
   .quick-actions{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
     gap:10px;
   }
 
@@ -755,7 +755,7 @@
       width:auto;
     }
     .quick-actions{
-      grid-template-columns:1fr;
+      grid-template-columns:1fr 1fr;
     }
     .panel.collapsible{
       position:fixed;
@@ -801,6 +801,7 @@
       width:100%;
     }
     .grid-2{ grid-template-columns:1fr; }
+    .quick-actions{ grid-template-columns:1fr; }
     #map{ height:calc(100vh - 118px); min-height:420px; }
     .map-mini-alert{
       left:10px;

@@ -158,7 +158,7 @@
     width:min(1260px, calc(100% - 32px));
     z-index:900;
     pointer-events:none;
-    max-height:calc(100vh - 170px);
+    max-height:calc(100vh - 210px);
     overflow:auto;
     padding-right:2px;
   }
@@ -1793,7 +1793,6 @@ function toggle(id){
 function toggleBottomPanel(panelId, forceOpen){
   const incidentsPanel = document.getElementById("incidentsPanel");
   const arrivalsPanel = document.getElementById("arrivalsPanel");
-  const sidebar = document.querySelector(".sidebar");
   const target = panelId === "incidentsPanel" ? incidentsPanel : arrivalsPanel;
   if (!target) return;
 
@@ -1802,17 +1801,7 @@ function toggleBottomPanel(panelId, forceOpen){
   if (incidentsPanel) incidentsPanel.classList.remove("open");
   if (arrivalsPanel) arrivalsPanel.classList.remove("open");
 
-  if (willOpen) {
-    target.classList.add("open");
-    setTimeout(function(){
-      if (sidebar && typeof sidebar.scrollTo === "function") {
-        const topPos = Math.max(0, target.offsetTop - 6);
-        sidebar.scrollTo({ top: topPos, behavior: "smooth" });
-      } else if (typeof target.scrollIntoView === "function") {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 120);
-  }
+  if (willOpen) target.classList.add("open");
 }
 
 function bindBottomPanelToggles(){
@@ -2120,7 +2109,9 @@ document.getElementById("assignModal").addEventListener("click", function(e){
 
 /* START */
 setPickedUI();
+openPanel("incidentPanel");
 bindBottomPanelToggles();
+toggleBottomPanel("incidentsPanel", true);
 loadOfficers();
 loadIncidents();
 updateDashboardTicker();

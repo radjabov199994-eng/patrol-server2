@@ -879,6 +879,16 @@
                 <p>Hodimlarni ko‘rish va biriktirish uchun boshqaruv panelini oching.</p>
                 <button id="openOfficerPanel" class="btn btn-light" type="button" style="width:100%;">Hodimlarni ko‘rish</button>
               </div>
+              <div class="action-card">
+                <h4>📋 Murojaatlar</h4>
+                <p>Murojaatlar jadvalini o‘ngdagi tugma kabi ochib-yoping.</p>
+                <button id="openIncidentsPanel" class="btn btn-light" type="button" style="width:100%;">Murojaatlar ro‘yxati</button>
+              </div>
+              <div class="action-card">
+                <h4>🚓 Yetib borishlar</h4>
+                <p>Bugungi yetib borishlar jadvalini ochib-yoping.</p>
+                <button id="openArrivalsPanel" class="btn btn-light" type="button" style="width:100%;">Yetib borishlar</button>
+              </div>
             </div>
 
             <div class="panel collapsible" id="officerPanel">
@@ -1698,6 +1708,39 @@ function toggle(id){
   if (!el) return;
   el.classList.toggle("open");
 }
+
+function toggleBottomPanel(panelId, forceOpen){
+  const incidentsPanel = document.getElementById("incidentsPanel");
+  const arrivalsPanel = document.getElementById("arrivalsPanel");
+  const target = panelId === "incidentsPanel" ? incidentsPanel : arrivalsPanel;
+  if (!target) return;
+
+  const willOpen = (typeof forceOpen === "boolean") ? forceOpen : !target.classList.contains("open");
+
+  if (incidentsPanel) incidentsPanel.classList.remove("open");
+  if (arrivalsPanel) arrivalsPanel.classList.remove("open");
+
+  if (willOpen) target.classList.add("open");
+}
+
+function bindBottomPanelToggles(){
+  const incidentsHead = document.getElementById("incidentsPanelToggle");
+  const arrivalsHead = document.getElementById("arrivalsPanelToggle");
+  const openIncidentsBtn = document.getElementById("openIncidentsPanel");
+  const openArrivalsBtn = document.getElementById("openArrivalsPanel");
+
+  if (incidentsHead) incidentsHead.onclick = function(e){
+    if (e.target && e.target.closest("a,button")) return;
+    toggleBottomPanel("incidentsPanel");
+  };
+  if (arrivalsHead) arrivalsHead.onclick = function(e){
+    if (e.target && e.target.closest("a,button")) return;
+    toggleBottomPanel("arrivalsPanel");
+  };
+  if (openIncidentsBtn) openIncidentsBtn.onclick = function(){ toggleBottomPanel("incidentsPanel"); };
+  if (openArrivalsBtn) openArrivalsBtn.onclick = function(){ toggleBottomPanel("arrivalsPanel"); };
+}
+
 const toggleOnlineBtn = document.getElementById("toggleOnline");
 const toggleOfflineBtn = document.getElementById("toggleOffline");
 if (toggleOnlineBtn) toggleOnlineBtn.onclick = function(){ toggle("onlineBox"); };
@@ -2023,6 +2066,8 @@ document.getElementById("assignModal").addEventListener("click", function(e){
 /* START */
 setPickedUI();
 openPanel("incidentPanel");
+bindBottomPanelToggles();
+toggleBottomPanel("incidentsPanel", true);
 loadOfficers();
 loadIncidents();
 updateDashboardTicker();

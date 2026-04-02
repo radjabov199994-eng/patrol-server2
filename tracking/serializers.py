@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
+from .models import OfficerStatus
+
 
 class LocationSerializer(serializers.Serializer):
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
     accuracy = serializers.FloatField(required=False)
-from rest_framework import serializers
-from .models import OfficerStatus
 
 
 class OfficerStatusSerializer(serializers.ModelSerializer):
@@ -30,7 +30,7 @@ class OfficerStatusSerializer(serializers.ModelSerializer):
         model = OfficerStatus
         fields = [
             "id",
-            "user",           # agar senga kerak bo‘lmasa olib tashlash mumkin
+            "user",
             "username",
             "first_name",
             "last_name",

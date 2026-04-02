@@ -2021,7 +2021,9 @@ document.getElementById("assignModal").addEventListener("click", function(e){
 
 /* START */
 setPickedUI();
+openPanel("incidentPanel");
 bindBottomPanelToggles();
+toggleBottomPanel("incidentsPanel", true);
 loadOfficers();
 loadIncidents();
 updateDashboardTicker();

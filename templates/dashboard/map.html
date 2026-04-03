@@ -1206,6 +1206,17 @@ function isSamarqandResult(item){
   return txt.includes("samarqand") || txt.includes("samarkand") || addrTxt.includes("samarqand") || addrTxt.includes("samarkand");
 }
 
+function escHtml(v){
+  return String(v ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+const esc = escHtml;
+
 function clearSearchResults(){
   const box = document.getElementById("searchResults");
   if (!box) return;
@@ -1248,10 +1259,11 @@ function renderSearchResults(items){
   }
 
   box.innerHTML = items.map((it, idx) => {
-    const title = it.name || it.display_name?.split(",")[0] || ("Natija " + (idx + 1));
+    const title = esc(it.name || it.display_name?.split(",")[0] || ("Natija " + (idx + 1)));
+    const subtitle = esc(it.display_name || "");
     return `<div class="search-item" data-search-idx="${idx}">
       <div class="search-item-title">${title}</div>
-      <div class="search-item-sub">${it.display_name || ""}</div>
+      <div class="search-item-sub">${subtitle}</div>
     </div>`;
   }).join("");
   box.style.display = "block";
@@ -1262,6 +1274,14 @@ function renderSearchResults(items){
       pickSearchResult(items[idx]);
     });
   });
+}
+
+function debounce(fn, wait){
+  let t = null;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
 }
 
 /* ✅ MAP INIT — CARTO FIX */
@@ -1933,28 +1953,28 @@ map.on('click', function(e){
   setMiniAlert(`Yangi nuqta tanlandi: <b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>`);
 });
 
-const searchBtn = document.getElementById("searchBtn");
-if (searchBtn) searchBtn.onclick = function(){
-  var q = document.getElementById("searchBox").value.trim();
-  if (!q){
-    alert("Manzil kiriting");
-    return;
+let searchAbortController = null;
+
+function doLocationSearch(rawQuery){
+  const q = String(rawQuery || "").trim();
+  if (!q) {
+    clearSearchResults();
+    return Promise.resolve();
   }
 
-  const query = encodeURIComponent(q);
-  const viewbox = `${SAMARKAND_BBOX.minLng},${SAMARKAND_BBOX.maxLat},${SAMARKAND_BBOX.maxLng},${SAMARKAND_BBOX.minLat}`;
-  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2"
-    + "&addressdetails=1"
-    + "&countrycodes=uz"
-    + "&bounded=1"
-    + "&limit=12"
-    + "&viewbox=" + encodeURIComponent(viewbox)
-    + "&q=" + query;
+  if (searchAbortController) searchAbortController.abort();
+  searchAbortController = new AbortController();
 
-  fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(list){
-      const filtered = (list || []).filter(function(item){
+  return fetch("/api/search-location/?q=" + encodeURIComponent(q), {
+    signal: searchAbortController.signal
+  })
+    .then(function(r){
+      if (!r.ok) throw new Error("search api: " + r.status);
+      return r.json();
+    })
+    .then(function(payload){
+      const list = Array.isArray(payload) ? payload : (payload?.results || []);
+      const filtered = list.filter(function(item){
         const lat = parseFloat(item.lat);
         const lon = parseFloat(item.lon);
         if (isNaN(lat) || isNaN(lon)) return false;
@@ -1964,13 +1984,52 @@ if (searchBtn) searchBtn.onclick = function(){
       renderSearchResults(filtered);
       if (filtered.length) {
         setMiniAlert("Bir nechta natija topildi. Keraklisini ro‘yxatdan tanlang.");
+      } else {
+        setMiniAlert("Samarqand bo‘yicha mos manzil topilmadi.");
       }
     })
-    .catch(function(){
+    .catch(function(err){
+      if (err && err.name === "AbortError") return;
       clearSearchResults();
-      setMiniAlert("⚠️ Qidiruvda xatolik. Internetni tekshirib qayta urinib ko‘ring.");
+      setMiniAlert("⚠️ Qidiruvda xatolik. Server logini tekshiring.");
     });
-};
+}
+
+const searchBox = document.getElementById("searchBox");
+const searchBtn = document.getElementById("searchBtn");
+
+const doLocationSearchDebounced = debounce(function(){
+  if (!searchBox) return;
+  const q = searchBox.value.trim();
+  if (q.length < 2) {
+    clearSearchResults();
+    return;
+  }
+  doLocationSearch(q);
+}, 350);
+
+if (searchBox){
+  searchBox.addEventListener("input", doLocationSearchDebounced);
+  searchBox.addEventListener("keydown", function(e){
+    if (e.key === "Enter"){
+      e.preventDefault();
+      doLocationSearch(searchBox.value);
+    }
+  });
+}
+
+if (searchBtn) {
+  searchBtn.onclick = function(){
+    if (!searchBox) return;
+    const q = searchBox.value.trim();
+    if (!q){
+      setMiniAlert("Manzil kiriting.");
+      clearSearchResults();
+      return;
+    }
+    doLocationSearch(q);
+  };
+}
 
 document.addEventListener("click", function(e){
   const searchWrap = document.querySelector(".toolbar");

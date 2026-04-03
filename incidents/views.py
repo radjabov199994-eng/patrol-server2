@@ -1,6 +1,8 @@
 from django.views.decorators.http import require_GET
 import json
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from django.shortcuts import redirect, get_object_or_404, render
 from django.http import HttpResponseForbidden, HttpResponse
 from django.http import JsonResponse
@@ -470,21 +472,106 @@ class MyProfileView(APIView):
             "phone": u.phone,
             "photo": photo_url
         })
+
+
+SAMARKAND_BBOX = {
+    "min_lat": 38.90,
+    "max_lat": 40.65,
+    "min_lng": 65.20,
+    "max_lng": 68.15,
+}
+
+
+def _is_inside_samarkand(lat: float, lon: float) -> bool:
+    return (
+        SAMARKAND_BBOX["min_lat"] <= lat <= SAMARKAND_BBOX["max_lat"]
+        and SAMARKAND_BBOX["min_lng"] <= lon <= SAMARKAND_BBOX["max_lng"]
+    )
+
+
+def _is_samarkand_text(item: dict) -> bool:
+    display_name = str(item.get("display_name", "")).lower()
+    addr = item.get("address") or {}
+    addr_blob = " ".join(
+        str(addr.get(k, ""))
+        for k in ("state", "region", "county", "city", "town", "village")
+    ).lower()
+    return (
+        "samarqand" in display_name
+        or "samarkand" in display_name
+        or "samarqand" in addr_blob
+        or "samarkand" in addr_blob
+    )
+
+
+def _overpass_geojson(osm_type: str, osm_id: int):
+    overpass_type = {"N": "node", "W": "way", "R": "relation"}.get(osm_type)
+    if not overpass_type:
+        return None
+
+    q = f"[out:json][timeout:12];{overpass_type}({osm_id});out geom;"
+    data = urlencode({"data": q}).encode("utf-8")
+    req = Request(
+        "https://overpass-api.de/api/interpreter",
+        data=data,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "PatrolDashboard/1.0",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    with urlopen(req, timeout=12) as response:
+        parsed = json.loads(response.read().decode("utf-8"))
+
+    elements = parsed.get("elements") or []
+    if not elements:
+        return None
+    el = elements[0]
+
+    geometry = el.get("geometry")
+    if geometry and len(geometry) >= 3:
+        coords = [[p["lon"], p["lat"]] for p in geometry if "lon" in p and "lat" in p]
+        if len(coords) >= 3:
+            if coords[0] != coords[-1]:
+                coords.append(coords[0])
+            return {"type": "Polygon", "coordinates": [coords]}
+
+    if el.get("type") == "relation":
+        rings = []
+        for member in el.get("members") or []:
+            if member.get("role") != "outer":
+                continue
+            geom = member.get("geometry") or []
+            ring = [[p["lon"], p["lat"]] for p in geom if "lon" in p and "lat" in p]
+            if len(ring) >= 3:
+                if ring[0] != ring[-1]:
+                    ring.append(ring[0])
+                rings.append(ring)
+        if rings:
+            return {"type": "MultiPolygon", "coordinates": [[ring] for ring in rings]}
+
+    return None
+
+
 @require_GET
 def search_location(request):
     q = request.GET.get("q", "").strip()
 
     if not q:
-        return JsonResponse([], safe=False)
+        return JsonResponse({"results": []})
+
+    samarkand_viewbox = f"{SAMARKAND_BBOX['min_lng']},{SAMARKAND_BBOX['max_lat']},{SAMARKAND_BBOX['max_lng']},{SAMARKAND_BBOX['min_lat']}"
 
     params = urlencode({
         "q": q,
         "format": "jsonv2",
         "addressdetails": 1,
-        "namedetails": 1,
-        "extratags": 1,
+        "polygon_geojson": 1,
         "countrycodes": "uz",
-        "limit": 10,
+        "limit": 12,
+        "bounded": 1,
+        "viewbox": samarkand_viewbox,
     })
 
     url = "https://nominatim.openstreetmap.org/search?" + params
@@ -498,10 +585,45 @@ def search_location(request):
             },
         )
 
-        with urlopen(req, timeout=8) as response:
+        with urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
 
-        return JsonResponse(data, safe=False)
+        filtered = []
+        for item in data if isinstance(data, list) else []:
+            try:
+                lat = float(item.get("lat"))
+                lon = float(item.get("lon"))
+            except (TypeError, ValueError):
+                continue
+
+            if not _is_inside_samarkand(lat, lon):
+                continue
+
+            if not _is_samarkand_text(item):
+                continue
+
+            geojson = item.get("geojson")
+            if not geojson and item.get("osm_type") in {"W", "R"} and item.get("osm_id"):
+                try:
+                    geojson = _overpass_geojson(item.get("osm_type"), int(item.get("osm_id")))
+                except Exception:
+                    geojson = None
+
+            filtered.append({
+                "display_name": item.get("display_name", ""),
+                "lat": str(lat),
+                "lon": str(lon),
+                "type": item.get("type", ""),
+                "category": item.get("category") or item.get("class", ""),
+                "geojson": geojson,
+            })
+
+        return JsonResponse({"results": filtered})
+
+    except HTTPError as e:
+        return JsonResponse({"error": f"Nominatim HTTP error: {e.code}"}, status=502)
+    except URLError:
+        return JsonResponse({"error": "Nominatim service unavailable"}, status=502)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

@@ -561,13 +561,12 @@ def search_location(request):
     if not q:
         return JsonResponse({"results": []})
 
-    samarkand_viewbox = f"{SAMARKAND_BBOX['min_lng']},{SAMARKAND_BBOX['max_lat']},{SAMARKAND_BBOX['max_lng']},{SAMARKAND_BBOX['min_lat']}"
+    samarkand_viewbox = "65.20,40.65,68.15,38.90"
 
     params = urlencode({
         "q": q,
         "format": "jsonv2",
         "addressdetails": 1,
-        "polygon_geojson": 1,
         "countrycodes": "uz",
         "limit": 12,
         "bounded": 1,
@@ -596,27 +595,20 @@ def search_location(request):
             except (TypeError, ValueError):
                 continue
 
-            if not _is_inside_samarkand(lat, lon):
+            if not (38.90 <= lat <= 40.65 and 65.20 <= lon <= 68.15):
                 continue
 
-            if not _is_samarkand_text(item):
+            display_name = str(item.get("display_name", ""))
+            addr = item.get("address") or {}
+            addr_blob = " ".join(
+                str(addr.get(k, ""))
+                for k in ("state", "region", "county", "city", "town", "village")
+            ).lower()
+            check = display_name.lower()
+            if "samarqand" not in check and "samarkand" not in check and "samarqand" not in addr_blob and "samarkand" not in addr_blob:
                 continue
 
-            geojson = item.get("geojson")
-            if not geojson and item.get("osm_type") in {"W", "R"} and item.get("osm_id"):
-                try:
-                    geojson = _overpass_geojson(item.get("osm_type"), int(item.get("osm_id")))
-                except Exception:
-                    geojson = None
-
-            filtered.append({
-                "display_name": item.get("display_name", ""),
-                "lat": str(lat),
-                "lon": str(lon),
-                "type": item.get("type", ""),
-                "category": item.get("category") or item.get("class", ""),
-                "geojson": geojson,
-            })
+            filtered.append(item)
 
         return JsonResponse({"results": filtered})
 

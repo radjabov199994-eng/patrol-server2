@@ -2076,15 +2076,7 @@ if (searchBox){
   searchBox.addEventListener("keydown", function(e){
     if (e.key === "Enter"){
       e.preventDefault();
-      if (searchResultsCache.length){
-        pickSearchResult(searchResultsCache[0]);
-        return;
-      }
-      doLocationSearch(searchBox.value).then(function(){
-        if (searchResultsCache.length){
-          pickSearchResult(searchResultsCache[0]);
-        }
-      });
+      doLocationSearch(searchBox.value);
     }
   });
 }

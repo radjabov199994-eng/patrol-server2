@@ -15,6 +15,7 @@ from incidents.views import (
     OfficerIncidentStatusView,
     OfficerMyIncidentsView,
     MyProfileView,
+    search_location,
 )
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -40,6 +41,7 @@ urlpatterns = [
     path("api/create-incident/", CreateIncidentView.as_view(), name="create_incident"),
     path("create-incident-form/", create_incident_form),
     path("api/incidents/", IncidentListView.as_view()),
+    path("api/search-location/", search_location, name="search_location"),
     path("api/officer/my-incidents/", OfficerMyIncidentsView.as_view(), name="officer_my_incidents"),
     path("api/incidents/<int:pk>/assign/", AssignIncidentView.as_view()),
     path("api/officer/incidents/<int:pk>/status/", OfficerIncidentStatusView.as_view(), name="officer_incident_status"),

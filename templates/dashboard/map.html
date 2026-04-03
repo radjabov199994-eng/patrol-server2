@@ -155,7 +155,7 @@
     position:absolute;
     top:16px;
     left:16px;
-    width:min(360px, calc(100% - 32px));
+    width:min(1260px, calc(100% - 32px));
     z-index:900;
     pointer-events:none;
     max-height:calc(100vh - 210px);
@@ -165,7 +165,7 @@
 
   .quick-actions{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
     gap:10px;
   }
 
@@ -224,13 +224,14 @@
   }
 
   .panel.collapsible.open{
-    max-height:1600px;
-    opacity:1;
-    transform:translateY(0) scale(1);
-    filter:blur(0);
-    border-color:rgba(255,255,255,.07);
-    pointer-events:auto;
-  }
+  max-height:calc(100vh - 220px);
+  opacity:1;
+  transform:translateY(0) scale(1);
+  filter:blur(0);
+  border-color:rgba(255,255,255,.07);
+  pointer-events:auto;
+  overflow:auto;
+}
 
   .panel-head{
     padding:15px 18px 12px;
@@ -252,8 +253,9 @@
   }
 
   .panel-body{
-    padding:16px 18px 18px;
-  }
+  padding:16px 18px 18px;
+  overflow:auto;
+}
 
   .inp,
   .textarea,
@@ -755,7 +757,7 @@
       width:auto;
     }
     .quick-actions{
-      grid-template-columns:1fr;
+      grid-template-columns:1fr 1fr;
     }
     .panel.collapsible{
       position:fixed;
@@ -801,6 +803,7 @@
       width:100%;
     }
     .grid-2{ grid-template-columns:1fr; }
+    .quick-actions{ grid-template-columns:1fr; }
     #map{ height:calc(100vh - 118px); min-height:420px; }
     .map-mini-alert{
       left:10px;

@@ -1,4 +1,6 @@
+from django.views.decorators.http import require_GET
 import json
+from urllib.parse import urlencode
 from django.shortcuts import redirect, get_object_or_404, render
 from django.http import HttpResponseForbidden, HttpResponse
 from django.http import JsonResponse
@@ -468,3 +470,38 @@ class MyProfileView(APIView):
             "phone": u.phone,
             "photo": photo_url
         })
+@require_GET
+def search_location(request):
+    q = request.GET.get("q", "").strip()
+
+    if not q:
+        return JsonResponse([], safe=False)
+
+    params = urlencode({
+        "q": q,
+        "format": "jsonv2",
+        "addressdetails": 1,
+        "namedetails": 1,
+        "extratags": 1,
+        "countrycodes": "uz",
+        "limit": 10,
+    })
+
+    url = "https://nominatim.openstreetmap.org/search?" + params
+
+    try:
+        req = Request(
+            url,
+            headers={
+                "User-Agent": "PatrolDashboard/1.0",
+                "Accept": "application/json",
+            },
+        )
+
+        with urlopen(req, timeout=8) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        return JsonResponse(data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

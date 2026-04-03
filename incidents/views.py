@@ -472,6 +472,88 @@ class MyProfileView(APIView):
             "phone": u.phone,
             "photo": photo_url
         })
+
+
+SAMARKAND_BBOX = {
+    "min_lat": 38.90,
+    "max_lat": 40.65,
+    "min_lng": 65.20,
+    "max_lng": 68.15,
+}
+
+
+def _is_inside_samarkand(lat: float, lon: float) -> bool:
+    return (
+        SAMARKAND_BBOX["min_lat"] <= lat <= SAMARKAND_BBOX["max_lat"]
+        and SAMARKAND_BBOX["min_lng"] <= lon <= SAMARKAND_BBOX["max_lng"]
+    )
+
+
+def _is_samarkand_text(item: dict) -> bool:
+    display_name = str(item.get("display_name", "")).lower()
+    addr = item.get("address") or {}
+    addr_blob = " ".join(
+        str(addr.get(k, ""))
+        for k in ("state", "region", "county", "city", "town", "village")
+    ).lower()
+    return (
+        "samarqand" in display_name
+        or "samarkand" in display_name
+        or "samarqand" in addr_blob
+        or "samarkand" in addr_blob
+    )
+
+
+def _overpass_geojson(osm_type: str, osm_id: int):
+    overpass_type = {"N": "node", "W": "way", "R": "relation"}.get(osm_type)
+    if not overpass_type:
+        return None
+
+    q = f"[out:json][timeout:12];{overpass_type}({osm_id});out geom;"
+    data = urlencode({"data": q}).encode("utf-8")
+    req = Request(
+        "https://overpass-api.de/api/interpreter",
+        data=data,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "PatrolDashboard/1.0",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    with urlopen(req, timeout=12) as response:
+        parsed = json.loads(response.read().decode("utf-8"))
+
+    elements = parsed.get("elements") or []
+    if not elements:
+        return None
+    el = elements[0]
+
+    geometry = el.get("geometry")
+    if geometry and len(geometry) >= 3:
+        coords = [[p["lon"], p["lat"]] for p in geometry if "lon" in p and "lat" in p]
+        if len(coords) >= 3:
+            if coords[0] != coords[-1]:
+                coords.append(coords[0])
+            return {"type": "Polygon", "coordinates": [coords]}
+
+    if el.get("type") == "relation":
+        rings = []
+        for member in el.get("members") or []:
+            if member.get("role") != "outer":
+                continue
+            geom = member.get("geometry") or []
+            ring = [[p["lon"], p["lat"]] for p in geom if "lon" in p and "lat" in p]
+            if len(ring) >= 3:
+                if ring[0] != ring[-1]:
+                    ring.append(ring[0])
+                rings.append(ring)
+        if rings:
+            return {"type": "MultiPolygon", "coordinates": [[ring] for ring in rings]}
+
+    return None
+
+
 @require_GET
 def search_location(request):
     q = request.GET.get("q", "").strip()

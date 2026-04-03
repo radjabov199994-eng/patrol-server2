@@ -1222,6 +1222,7 @@ function clearSearchResults(){
   if (!box) return;
   box.style.display = "none";
   box.innerHTML = "";
+  searchResultsCache = [];
 }
 
 function pickSearchResult(item){
@@ -1234,23 +1235,56 @@ function pickSearchResult(item){
     return;
   }
 
-  map.setView([lat, lon], 16);
+  clearBoundaryLayer();
   document.getElementById("lat").value = lat.toFixed(6);
   document.getElementById("lng").value = lon.toFixed(6);
   document.getElementById("address_text").value = item.display_name || "";
 
+  let polygonDrawn = false;
+  if (item.geojson && typeof item.geojson === "object"){
+    try {
+      searchBoundaryLayer = L.geoJSON(item.geojson, {
+        style: {
+          color: "#22c55e",
+          weight: 3,
+          fillColor: "#22c55e",
+          fillOpacity: 0.22,
+        }
+      }).addTo(map);
+
+      const bounds = searchBoundaryLayer.getBounds();
+      if (bounds && bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.08));
+      } else {
+        map.setView([lat, lon], 16);
+      }
+      polygonDrawn = true;
+    } catch (e) {
+      polygonDrawn = false;
+    }
+  }
+
+  if (!polygonDrawn) {
+    map.setView([lat, lon], 16);
+  }
+
   if (clickMarker) map.removeLayer(clickMarker);
   clickMarker = L.marker([lat, lon]).addTo(map).bindPopup(
-    "<b>Qidiruv natijasi</b><br/><div style='margin-top:6px'>" + (item.display_name || "") + "</div>"
+    "<b>Qidiruv natijasi</b><br/><div style='margin-top:6px'>" + esc(item.display_name || "") + "</div>"
   ).openPopup();
 
   clearSearchResults();
-  setMiniAlert("Qidiruv natijasi tanlandi: <b>" + (item.display_name || "") + "</b>");
+  if (polygonDrawn){
+    setMiniAlert("Hudud topildi va zona bo‘yaldi: <b>" + esc(item.display_name || "") + "</b>");
+  } else {
+    setMiniAlert("Qidiruv natijasi tanlandi: <b>" + esc(item.display_name || "") + "</b>");
+  }
 }
 
 function renderSearchResults(items){
   const box = document.getElementById("searchResults");
   if (!box) return;
+  searchResultsCache = Array.isArray(items) ? items : [];
   if (!items || !items.length){
     box.style.display = "none";
     box.innerHTML = "";
@@ -1271,7 +1305,7 @@ function renderSearchResults(items){
   box.querySelectorAll("[data-search-idx]").forEach(el => {
     el.addEventListener("click", function(){
       const idx = Number(el.getAttribute("data-search-idx"));
-      pickSearchResult(items[idx]);
+      pickSearchResult(searchResultsCache[idx]);
     });
   });
 }
@@ -1290,19 +1324,46 @@ var map = L.map('map', {
   preferCanvas: true
 }).setView([39.6542, 66.9597], 13);
 
-L.tileLayer(
+const baseDarkLayer = L.tileLayer(
   'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   {
     subdomains: 'abcd',
     maxZoom: 20,
     attribution: '&copy; OpenStreetMap &copy; CARTO'
   }
-).addTo(map);
+);
+
+const baseFallbackLayer = L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 20,
+    attribution: "&copy; OpenStreetMap"
+  }
+);
+
+let __fallbackLoaded = false;
+baseDarkLayer.on("tileerror", function(){
+  if (__fallbackLoaded) return;
+  __fallbackLoaded = true;
+  if (map.hasLayer(baseDarkLayer)) map.removeLayer(baseDarkLayer);
+  baseFallbackLayer.addTo(map);
+});
+
+baseDarkLayer.addTo(map);
 
 var incidentsLayer = L.layerGroup().addTo(map);
 var officersLayer = L.layerGroup().addTo(map);
 var routesLayer = L.layerGroup().addTo(map);
 var clickMarker = null;
+var searchBoundaryLayer = null;
+var searchResultsCache = [];
+
+function clearBoundaryLayer(){
+  if (searchBoundaryLayer){
+    map.removeLayer(searchBoundaryLayer);
+    searchBoundaryLayer = null;
+  }
+}
 
 setTimeout(function(){
   map.invalidateSize();
@@ -1927,6 +1988,7 @@ function updateDashboardTicker(){
 
 /* MAP CLICK */
 window.cancelDraftMarker = function(){
+  clearBoundaryLayer();
   if (clickMarker){
     map.removeLayer(clickMarker);
     clickMarker = null;
@@ -1938,6 +2000,7 @@ window.cancelDraftMarker = function(){
 };
 
 map.on('click', function(e){
+  clearBoundaryLayer();
   var lat = e.latlng.lat;
   var lng = e.latlng.lng;
 

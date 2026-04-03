@@ -1,6 +1,8 @@
 from django.views.decorators.http import require_GET
 import json
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from django.shortcuts import redirect, get_object_or_404, render
 from django.http import HttpResponseForbidden, HttpResponse
 from django.http import JsonResponse
@@ -475,16 +477,18 @@ def search_location(request):
     q = request.GET.get("q", "").strip()
 
     if not q:
-        return JsonResponse([], safe=False)
+        return JsonResponse({"results": []})
+
+    samarkand_viewbox = "65.20,40.65,68.15,38.90"
 
     params = urlencode({
         "q": q,
         "format": "jsonv2",
         "addressdetails": 1,
-        "namedetails": 1,
-        "extratags": 1,
         "countrycodes": "uz",
-        "limit": 10,
+        "limit": 12,
+        "bounded": 1,
+        "viewbox": samarkand_viewbox,
     })
 
     url = "https://nominatim.openstreetmap.org/search?" + params
@@ -498,10 +502,38 @@ def search_location(request):
             },
         )
 
-        with urlopen(req, timeout=8) as response:
+        with urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
 
-        return JsonResponse(data, safe=False)
+        filtered = []
+        for item in data if isinstance(data, list) else []:
+            try:
+                lat = float(item.get("lat"))
+                lon = float(item.get("lon"))
+            except (TypeError, ValueError):
+                continue
+
+            if not (38.90 <= lat <= 40.65 and 65.20 <= lon <= 68.15):
+                continue
+
+            display_name = str(item.get("display_name", ""))
+            addr = item.get("address") or {}
+            addr_blob = " ".join(
+                str(addr.get(k, ""))
+                for k in ("state", "region", "county", "city", "town", "village")
+            ).lower()
+            check = display_name.lower()
+            if "samarqand" not in check and "samarkand" not in check and "samarqand" not in addr_blob and "samarkand" not in addr_blob:
+                continue
+
+            filtered.append(item)
+
+        return JsonResponse({"results": filtered})
+
+    except HTTPError as e:
+        return JsonResponse({"error": f"Nominatim HTTP error: {e.code}"}, status=502)
+    except URLError:
+        return JsonResponse({"error": "Nominatim service unavailable"}, status=502)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
